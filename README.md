@@ -1,0 +1,1 @@
+## 本地运行1、`pip install -r requirements.txt`2、配置 config.py `DevConfig` 的 `SERVER_HOST`3、启动入口 `run.py`4、访问 `http://yourhost:9090/docs`

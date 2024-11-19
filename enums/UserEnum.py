@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/6# @Author : cyq# @File : UserGenderEnum# @Software: PyCharm# @Desc:from enum import IntEnumclass GenderEnum(IntEnum):    MALE = 1    FEMALE = 0

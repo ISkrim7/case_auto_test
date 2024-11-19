@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/7/5# @Author : cyq# @File : __init__# @Software: PyCharm# @Desc:import ospath = os.path.join(os.path.dirname(__file__), 'img.png')bj_file = os.path.join(os.path.dirname(__file__), 'beijian.xlsx')
