@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/11/20# @Author : cyq# @File : interfaceResultMapper# @Software: PyCharm# @Desc:from app.mapper import Mapperclass InterfaceResultMapper(Mapper):    __model__ = "interface_result"

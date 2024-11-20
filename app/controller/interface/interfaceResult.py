@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/11/20# @Author : cyq# @File : interfaceResult# @Software: PyCharm# @Desc:from fastapi import APIRouterrouter = APIRouter(prefix="/interface/result", tags=['自动化接口步骤'])

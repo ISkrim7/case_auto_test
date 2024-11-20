@@ -1,1 +1,1 @@
-#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/20# @Author : cyq# @File : __init__.py# @Software: PyCharm# @Desc:from app.mapper import Mapperfrom model.project import Projectclass ProjectMapper(Mapper):    __model__ = Project
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/20# @Author : cyq# @File : __init__.py# @Software: PyCharm# @Desc:from app.mapper import Mapperfrom model.base.project import Projectclass ProjectMapper(Mapper):    __model__ = Project

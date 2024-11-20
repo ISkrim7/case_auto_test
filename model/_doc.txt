@@ -1,1 +1,0 @@
-await session.flush()- 会将session中的数据刷到数据库中，使数据库主键自增,但不写到磁盘里- 别的session查询时并不会查到flush的数据session.expunge(instance)从此“会话”中删除“实例”。这将释放对实例的所有内部引用。级联将根据删除级联规则应用。并且在后续的 flush 或 commit 操作中也不会被同步到数据库relationship- lazy    - select 问到属性的时候，就会全部加载该属性的数据    - joined 对关联的两个表使用联接    - subquery 与joined类似，但使用子子查询    - dynamic 懒加载 加载记录的查询，也就是生成query对象
