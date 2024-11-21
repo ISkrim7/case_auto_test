@@ -5,7 +5,6 @@ __pycache__/
 Logs/
 # C extensions
 *.so
-.env
 play_error_shot/
 # celery
 celerybeat-schedule.*
