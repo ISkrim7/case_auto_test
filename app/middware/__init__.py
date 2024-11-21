@@ -1,1 +1,1 @@
-#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/7# @Author : cyq# @File : __init__.py# @Software: PyCharm# @Desc:CORS_ALLOW_ORIGINS = {    "allow_origins": ['*'],    "allow_credentials": True,    "allow_methods": ['*'],    "allow_headers": ['*'],}
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/7# @Author : cyq# @File : __init__.py# @Software: PyCharm# @Desc:CORS_ALLOW_ORIGINS = {    "allow_origins": ['*'],    "allow_credentials": True,    "allow_methods": ['*'],    "allow_headers": ['*'],}
