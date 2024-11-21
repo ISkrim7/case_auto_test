@@ -1,1 +1,1 @@
-#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/25# @Author : cyq# @File : departmentMapper# @Software: PyCharm# @Desc:from model.base.user import UserDepartmentfrom app.mapper import Mapperclass DepartmentMapper(Mapper):    __model__ = UserDepartment
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/6/25# @Author : cyq# @File : departmentMapper# @Software: PyCharm# @Desc:from app.model.base import UserDepartmentfrom app.mapper import Mapperclass DepartmentMapper(Mapper):    __model__ = UserDepartment
