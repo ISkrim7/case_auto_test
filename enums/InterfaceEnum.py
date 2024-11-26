@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/11/26# @Author : cyq# @File : InterfaceEnum# @Software: PyCharm# @Desc:class InterfaceAPIStatusEnum:    """接口结果实例状态"""    RUNNING = "RUNNING"    OVER = "OVER"class InterfaceAPIResultEnum:    """接口结果实例状态"""    SUCCESS = "SUCCESS"    FAIL = "FAIL"
