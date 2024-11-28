@@ -23,7 +23,7 @@ class ExecResponseExtract:
                                     expr=extract['value'])
                     value = await jp.value()
                     extract['value'] = value
-                case InterfaceExtractTargetVariablesEnum.ResponseHeaderExtract:
+                case int(InterfaceExtractTargetVariablesEnum.ResponseHeaderExtract):
                     jp = MyJsonPath(jsonBody=dict(self.response.headers),
                                     expr=extract['value'])
                     value = await jp.value()
