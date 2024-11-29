@@ -15,7 +15,7 @@ class InterfaceCaseSchema(BaseModel):
     project_id: int | None = None
 
 
-class InsertInterfaceCaseSchema(InterfaceCaseSchema):
+class InsertInterfaceCaseBaseInfoSchema(InterfaceCaseSchema):
     title: str
     desc: str
     level: str
@@ -35,3 +35,17 @@ class PageInterfaceCaseSchema(InterfaceCaseSchema, PageSchema):
 class AddInterfaceCaseStepSchema(InterfaceCaseSchema):
     id: int
     interfaceSteps: List[int]
+
+
+class AddInterfaceApi2Case(BaseModel):
+    caseId: int
+    apiId: int
+
+
+class RemoveInterfaceApi2Case(AddInterfaceApi2Case):
+    ...
+
+
+class ReorderInterfaceApi2Case(BaseModel):
+    caseId: int
+    apiIds: List[int]
