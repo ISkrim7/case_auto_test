@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2024/12/4# @Author : cyq# @File : _script# @Software: PyCharm# @Desc:class DEMO:    a = "1"    b = "2"print(vars(DEMO))print(DEMO.__dict__)
