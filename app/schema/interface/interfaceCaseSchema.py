@@ -28,6 +28,10 @@ class OptionInterfaceCaseSchema(InterfaceCaseSchema):
     id: int
 
 
+class ExecuteInterfaceCaseSchema(InterfaceCaseSchema):
+    caseId: int
+
+
 class PageInterfaceCaseSchema(InterfaceCaseSchema, PageSchema):
     ...
 
