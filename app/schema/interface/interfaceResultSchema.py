@@ -29,3 +29,4 @@ class InterfaceResultFieldSchema(BaseSchema):
     interfaceEnvId: int | None = None
     starterId: int | None = None
     result: str | None = None
+    interface_case_result_Id:int | None = None
