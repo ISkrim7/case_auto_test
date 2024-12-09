@@ -26,6 +26,7 @@ class PageEnvSchema(EnvField, PageSchema):
     ...
 
 
+
 class UpdateEnvSchema(EnvField):
     id: int
 
