@@ -9,6 +9,11 @@ class BaseSchema(BaseModel):
     uid: str | None = None
 
 
+class RemoveAllCaseResult(BaseModel):
+    interfaceCaseID: int
+
+
+
 class InterfaceCaseResultFieldSchema(BaseSchema):
     interfaceCaseID: int | None = None
     interfaceCaseName: str | None = None
@@ -29,4 +34,8 @@ class InterfaceResultFieldSchema(BaseSchema):
     interfaceEnvId: int | None = None
     starterId: int | None = None
     result: str | None = None
-    interface_case_result_Id:int | None = None
+    interface_case_result_Id: int | None = None
+
+
+class PageInterfaceCaseResultFieldSchema(InterfaceCaseResultFieldSchema, PageSchema):
+    ...
