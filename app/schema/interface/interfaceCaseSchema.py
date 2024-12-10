@@ -36,9 +36,9 @@ class PageInterfaceCaseSchema(InterfaceCaseSchema, PageSchema):
     ...
 
 
-class AddInterfaceCaseStepSchema(InterfaceCaseSchema):
-    id: int
-    interfaceSteps: List[int]
+class AddInterfaceCaseCommonAPISchema(BaseModel):
+    caseId: int
+    commonApis: List[int]
 
 
 class AddInterfaceApi2Case(BaseModel):
