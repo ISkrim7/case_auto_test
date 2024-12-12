@@ -39,6 +39,17 @@ class AssocCasesSchema(BaseModel):
     taskId: int
     caseIds: List[int]
 
+
 class RemoveAssocCasesSchema(BaseModel):
     taskId: int
     caseId: int
+
+
+class AssocApisSchema(BaseModel):
+    taskId: int
+    apiIds: List[int]
+
+
+class RemoveAssocApisSchema(BaseModel):
+    taskId: int
+    apiId: int
