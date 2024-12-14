@@ -9,12 +9,17 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
     title: str | None = None
     desc: str | None = None
     cron: str | None = None
-    switch: int | bool | None = None
-    status: str | None = None
+    status: str | None = "WAIT"
     level: str | None = None
     total_cases_num: int | None = 0
     part_id: int | None = None
     project_id: int | None = None
+
+    is_auto: int | None = 0
+    is_send: int | None = 0
+    retry: int | None = 0
+    send_type: int | None = None
+    send_key: str | None = None
 
 
 class PageInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema, PageSchema):
@@ -24,8 +29,6 @@ class PageInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema, PageSchema):
 class InsertInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
     title: str
     desc: str
-    switch: int | bool
-    status: str
     level: str
     part_id: int
     project_id: int
@@ -34,6 +37,8 @@ class InsertInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
 class OptionInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
     id: int
 
+class GetByTaskId(BaseModel):
+    taskId:int
 
 class AssocCasesSchema(BaseModel):
     taskId: int

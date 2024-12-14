@@ -13,6 +13,7 @@ class InterfaceCaseSchema(BaseModel):
     status: str | None = None
     part_id: int | None = None
     project_id: int | None = None
+    error_stop: int | None = None
 
 
 class InsertInterfaceCaseBaseInfoSchema(InterfaceCaseSchema):
