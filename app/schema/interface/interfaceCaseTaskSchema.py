@@ -1,6 +1,6 @@
-from app.schema import BaseSchema, PageSchema
-from pydantic import BaseModel, Field, validator
-from typing import List, Dict, Any, Literal
+from app.schema import PageSchema
+from pydantic import BaseModel
+from typing import List
 
 
 class InterfaceCaseTaskFieldSchema(BaseModel):
@@ -37,8 +37,10 @@ class InsertInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
 class OptionInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
     id: int
 
+
 class GetByTaskId(BaseModel):
-    taskId:int
+    taskId: int
+
 
 class AssocCasesSchema(BaseModel):
     taskId: int
@@ -58,3 +60,20 @@ class AssocApisSchema(BaseModel):
 class RemoveAssocApisSchema(BaseModel):
     taskId: int
     apiId: int
+
+
+class InterfaceTaskResultSchema(BaseModel):
+    status: str | None = None
+    result: str | None = None
+    startBy: int | None = None
+    starterId: int | None = None
+    taskId: int | None = None
+    runDay: str | None = None
+    interfaceProjectId: int | None = None
+    interfacePartId: int | None = None
+
+class InterfaceTaskResultDetailSchema(BaseModel):
+    resultId: int
+
+class PageInterfaceTaskResultSchema(InterfaceTaskResultSchema,PageSchema):
+    ...

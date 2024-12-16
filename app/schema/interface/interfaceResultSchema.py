@@ -35,7 +35,11 @@ class InterfaceResultFieldSchema(BaseSchema):
     starterId: int | None = None
     result: str | None = None
     interface_case_result_Id: int | None = None
+    interface_task_result_Id: int | None = None
 
 
 class PageInterfaceCaseResultFieldSchema(InterfaceCaseResultFieldSchema, PageSchema):
+    ...
+
+class PageInterfaceApiResultFieldSchema(InterfaceResultFieldSchema, PageSchema):
     ...
