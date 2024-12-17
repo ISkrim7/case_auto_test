@@ -73,16 +73,21 @@ class TaskRunner:
     async def __run_Cases(self, cases: InterfaceCases, task_result: InterfaceTaskResult):
         """执行关联case"""
         for case in cases:
-            flag: bool = await InterFaceRunner(self.stater, self.io).run_interfaceCase_by_task(
-                interfaceCase=case,
-                taskResult=task_result
-            )
-            log.debug(flag)
-            await self.set_process(task_result)
-            if flag:
-                task_result.successNumber += 1
-            else:
-                self.result = InterfaceAPIResultEnum.ERROR
+            retries = 0
+            while retries <= self.task.retry:
+                flag: bool = await InterFaceRunner(self.stater, self.io).run_interfaceCase_by_task(
+                    interfaceCase=case,
+                    taskResult=task_result
+                )
+                log.debug(flag)
+                await self.set_process(task_result)
+                if flag:
+                    task_result.successNumber += 1
+                    break
+                else:
+                    retries += 1
+            if retries > self.task.retry:
+                task_result.result = InterfaceAPIResultEnum.ERROR
                 task_result.failNumber += 1
 
     async def set_process(self, task_result: InterfaceTaskResult):
