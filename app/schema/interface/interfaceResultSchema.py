@@ -23,6 +23,7 @@ class InterfaceCaseResultFieldSchema(BaseSchema):
     starterId: int | None = None
     status: str | None = None
     result: str | None = None
+    interface_task_result_Id: int | None = None
 
 
 class InterfaceResultFieldSchema(BaseSchema):
