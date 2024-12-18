@@ -1,3 +1,8 @@
+import enum
+
+from app.model.base import User
+
+
 class TaskStatus:
     RUNNING = "RUNNING"
     DONE = "DONE"
@@ -8,7 +13,7 @@ class TaskResult:
     FAIL = "FAIL"
 
 
-class TaskStarer:
+class StarterEnum(enum.Enum):
     User = 1
-    Robot = 2
-    Jenkins = 3
+    Jenkins = 2
+    RoBot = 3

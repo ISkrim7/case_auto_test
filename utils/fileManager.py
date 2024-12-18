@@ -1,13 +1,12 @@
 import os
 from typing import AnyStr, NoReturn
 from fastapi import UploadFile
-from app.model.base import FileModel
-from enums import FileEnum
-from utils import GenerateTools
+
+from app.mapper.file import FileMapper
+from app.model.base import User
+from config import Config
+from utils import GenerateTools, log
 from file import current_dir as file_path
-import shutil
-
-
 
 
 def verify_dir(_path: str):
@@ -15,48 +14,52 @@ def verify_dir(_path: str):
         os.makedirs(_path)
 
 
-
-
 class FileManager:
-    AVATAR = os.path.join(file_path, "Avatar")
+    # 头像
+    AVATAR = os.path.join(file_path, "avatar")
 
     @staticmethod
-    def writer(file: UploadFile, T: FileEnum, pid: str = None):
+    async def save_avatar(file: UploadFile, user: User):
         """
-        写入文件
-        :param file: UploadFile
-        :param T: 类型
-        :param pid: 项目id
-        :return:
+        头像存本地
+        路径存file table
+        url 存user
+        更新
+        删除本地原来
+        删除file table
+        重新存
         """
-        fileName = GenerateTools.uid()
-        opt = {
-            FileEnum.AVATAR: FileManager._save_avatar,
-            # FileEnum.BUG: FileManager._save_bug,
-        }
-        # if pid:
-        #     return FileManager._save_excel(file, fileName, pid)
-        return opt[T](file, fileName)
-
-    @staticmethod
-    def _save_avatar(file: UploadFile, fileName: str) -> str:
         verify_dir(FileManager.AVATAR)
-        _path = os.path.join(FileManager.AVATAR, fileName)
-        with open(_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        return _path
+        if user.avatar:
+            log.debug(user.avatar)
+            await FileMapper.remove_file(user.avatar.split("uid=")[-1])
+
+        fileName = GenerateTools.uid()
+        fileType = file.content_type
+        filePath = os.path.join(FileManager.AVATAR, fileName)
+        with open(filePath, "wb") as buffer:
+            buffer.write(await file.read())
+
+        file_model = await FileMapper.insert(**dict(
+            fileType=fileType,
+            filePath=filePath,
+            fileName=fileName
+        ))
+        avatar_PATH = Config.FILE_AVATAR_PATH + file_model.uid
+        from app.mapper.user import UserMapper
+        await UserMapper.set_avatar(avatar_PATH, user)
 
     @staticmethod
-    def delAvatar(avatarPath: AnyStr) -> NoReturn:
+    def delFile(path: AnyStr):
         """
         delAvatar
-        :param avatarPath: 绝对路径
+        :param path: 绝对路径
         :return:
         """
-        if os.path.exists(avatarPath):
-            os.remove(avatarPath)
+        if os.path.exists(path):
+            os.remove(path)
 
     @staticmethod
-    def reader(path:str):
+    def reader(path: str):
         with open(path, "rb") as f:
             return f.read()

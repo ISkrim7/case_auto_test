@@ -15,8 +15,8 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
     part_id: int | None = None
     project_id: int | None = None
 
-    is_auto: int | None = 0
-    is_send: int | None = 0
+    is_auto: bool | None = None
+    is_send: bool | None = None
     retry: int | None = 0
     send_type: int | None = None
     send_key: str | None = None
@@ -68,12 +68,14 @@ class InterfaceTaskResultSchema(BaseModel):
     startBy: int | None = None
     starterId: int | None = None
     taskId: int | None = None
-    runDay: str | None = None
+    runDay: str | List[str] | None = None
     interfaceProjectId: int | None = None
     interfacePartId: int | None = None
+
 
 class InterfaceTaskResultDetailSchema(BaseModel):
     resultId: int
 
-class PageInterfaceTaskResultSchema(InterfaceTaskResultSchema,PageSchema):
+
+class PageInterfaceTaskResultSchema(InterfaceTaskResultSchema, PageSchema):
     ...

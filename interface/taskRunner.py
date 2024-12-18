@@ -3,10 +3,11 @@ from typing import TypeVar, List
 from app.mapper.interface import InterfaceTaskMapper
 from app.model.base import User
 from app.model.interface import InterfaceModel, InterFaceCaseModel, InterfaceTask, InterfaceTaskResultModel
-from enums import InterfaceAPIResultEnum
+from enums import InterfaceAPIResultEnum, StarterEnum
 from utils import MyLoguru
 from .io_sender import APISocketSender
 from .runner import InterFaceRunner
+from .starter import Starter
 from .writer import InterfaceAPIWriter
 
 log = MyLoguru().get_logger()
@@ -21,24 +22,22 @@ class TaskRunner:
     task: InterfaceTask
     result: str = InterfaceAPIResultEnum.SUCCESS
 
-    def __init__(self, stater: User = None, io: APISocketSender | None = None):
+    def __init__(self, stater: Starter = Starter(startBy=StarterEnum.RoBot), io: APISocketSender | None = None):
         self.stater = stater
         self.io = io
         self.progress = 0
 
-    async def runTask(self, taskId: int, startBy: int = 1):
+    async def runTask(self, taskId: int):
         """
         执行任务
         :param taskId: 任务Id
-        :param startBy: 执行人  默认 手动 1
         :return:
         """
         self.task = await InterfaceTaskMapper.get_by_id(taskId)
-        if startBy == 1:
-            startBy = self.stater
-        log.debug(f"running task {self.task} start by {startBy}")
+        log.debug(f"running task {self.task} start by {self.stater.username}")
 
-        task_result: InterfaceTaskResult = await InterfaceAPIWriter.init_interface_task(self.task, startBy=startBy)
+        task_result: InterfaceTaskResult = await InterfaceAPIWriter.init_interface_task(self.task,
+                                                                                        starter=self.stater)
         try:
             apis: Interfaces = await InterfaceTaskMapper.query_apis(self.task.id)
             cases: InterfaceCases = await InterfaceTaskMapper.query_case(self.task.id)
@@ -57,7 +56,7 @@ class TaskRunner:
 
     async def __run_Apis(self, apis: Interfaces, task_result: InterfaceTaskResult):
         """执行关联api"""
-        for index, api in enumerate(apis, start=1):
+        for api in apis:
             flag: bool = await InterFaceRunner(self.stater, self.io).run_interface_by_task(
                 interface=api,
                 taskResult=task_result
@@ -73,20 +72,15 @@ class TaskRunner:
     async def __run_Cases(self, cases: InterfaceCases, task_result: InterfaceTaskResult):
         """执行关联case"""
         for case in cases:
-            retries = 0
-            while retries <= self.task.retry:
-                flag: bool = await InterFaceRunner(self.stater, self.io).run_interfaceCase_by_task(
-                    interfaceCase=case,
-                    taskResult=task_result
-                )
-                log.debug(flag)
-                await self.set_process(task_result)
-                if flag:
-                    task_result.successNumber += 1
-                    break
-                else:
-                    retries += 1
-            if retries > self.task.retry:
+            flag: bool = await InterFaceRunner(self.stater, self.io).run_interfaceCase_by_task(
+                interfaceCase=case,
+                taskResult=task_result
+            )
+            await self.set_process(task_result)
+            if flag:
+                task_result.successNumber += 1
+                break
+            else:
                 task_result.result = InterfaceAPIResultEnum.ERROR
                 task_result.failNumber += 1
 
