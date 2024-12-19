@@ -42,6 +42,10 @@ class GetByTaskId(BaseModel):
     taskId: int
 
 
+class SetTaskAuto(GetByTaskId):
+    is_auto: bool
+
+
 class AssocCasesSchema(BaseModel):
     taskId: int
     caseIds: List[int]
@@ -74,6 +78,10 @@ class InterfaceTaskResultSchema(BaseModel):
 
 
 class InterfaceTaskResultDetailSchema(BaseModel):
+    resultId: int
+
+
+class RemoveInterfaceTaskResultDetailSchema(BaseModel):
     resultId: int
 
 

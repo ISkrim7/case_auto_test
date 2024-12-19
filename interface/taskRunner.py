@@ -22,8 +22,10 @@ class TaskRunner:
     task: InterfaceTask
     result: str = InterfaceAPIResultEnum.SUCCESS
 
-    def __init__(self, stater: Starter = Starter(startBy=StarterEnum.RoBot), io: APISocketSender | None = None):
-        self.stater = stater
+    def __init__(self,
+                 starter: Starter | None,
+                 io: APISocketSender | None):
+        self.starter = starter
         self.io = io
         self.progress = 0
 
@@ -34,10 +36,10 @@ class TaskRunner:
         :return:
         """
         self.task = await InterfaceTaskMapper.get_by_id(taskId)
-        log.debug(f"running task {self.task} start by {self.stater.username}")
+        log.debug(f"running task {self.task} start by {self.starter.username}")
 
         task_result: InterfaceTaskResult = await InterfaceAPIWriter.init_interface_task(self.task,
-                                                                                        starter=self.stater)
+                                                                                        starter=self.starter)
         try:
             apis: Interfaces = await InterfaceTaskMapper.query_apis(self.task.id)
             cases: InterfaceCases = await InterfaceTaskMapper.query_case(self.task.id)
@@ -57,7 +59,7 @@ class TaskRunner:
     async def __run_Apis(self, apis: Interfaces, task_result: InterfaceTaskResult):
         """执行关联api"""
         for api in apis:
-            flag: bool = await InterFaceRunner(self.stater, self.io).run_interface_by_task(
+            flag: bool = await InterFaceRunner(self.starter, self.io).run_interface_by_task(
                 interface=api,
                 taskResult=task_result
             )
@@ -68,11 +70,12 @@ class TaskRunner:
             else:
                 self.result = InterfaceAPIResultEnum.ERROR
                 task_result.failNumber += 1
+            await self.io.clear_logs()
 
     async def __run_Cases(self, cases: InterfaceCases, task_result: InterfaceTaskResult):
         """执行关联case"""
         for case in cases:
-            flag: bool = await InterFaceRunner(self.stater, self.io).run_interfaceCase_by_task(
+            flag: bool = await InterFaceRunner(self.starter, self.io).run_interfaceCase_by_task(
                 interfaceCase=case,
                 taskResult=task_result
             )
@@ -83,6 +86,7 @@ class TaskRunner:
             else:
                 task_result.result = InterfaceAPIResultEnum.ERROR
                 task_result.failNumber += 1
+            await self.io.clear_logs()
 
     async def set_process(self, task_result: InterfaceTaskResult):
         """写进度"""
