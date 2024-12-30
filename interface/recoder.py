@@ -4,6 +4,7 @@ from typing import List, Mapping, Dict, Any
 from mitmproxy import http
 from enums import InterfaceRequestTBodyTypeEnum
 from utils import log
+from utils.redis_ import RedisManager
 
 Headers = List[Dict[str, Any]] | None
 Params = List[Dict[str, Any]] | None
@@ -14,8 +15,16 @@ class InterfaceRecoder:
 
     async def response(self, flow: http.HTTPFlow) -> None:
         """response 响应回调"""
-        ir = InterfaceRequest(flow)
-        log.error(ir.map)
+        client_conn = flow.client_conn.peername[0]
+        _client = RedisManager.get_keys("record_" + client_conn)
+        if flow.request.method.lower() == "options" or flow.request.url.endswith(
+                ("js", "css", "ttf", "jpg", "svg", "gif", "png")):
+            return
+        if _client and _client["url"] in flow.request.url \
+                and flow.request.method.lower() == _client["method"].lower():
+            ir = InterfaceRequest(flow)
+            log.debug(ir.url)
+            RedisManager.l_push("record_" + _client['userId'], [ir.map])
 
 
 class InterfaceRequest:
@@ -31,7 +40,6 @@ class InterfaceRequest:
         self.flow = flow
         self.url = flow.request.url
         self.method = flow.request.method
-
         self.set_Headers()
         self.set_Body()
 
@@ -96,7 +104,7 @@ class InterfaceRequest:
         return result
 
     @property
-    def map(self):
+    def map(self) -> str:
         m = dict(url=self.url,
                  method=self.method,
                  headers=self.headers,
@@ -104,4 +112,4 @@ class InterfaceRequest:
                  data=self.data,
                  body=self.body,
                  bodyType=self.bodyType)
-        return m
+        return json.dumps(m, ensure_ascii=False)
