@@ -15,10 +15,12 @@ class InterfaceRecoder:
 
     async def response(self, flow: http.HTTPFlow) -> None:
         """response 响应回调"""
+
         client_conn = flow.client_conn.peername[0]
+        log.warning(flow.request.url)
         _client = RedisManager.get_keys("record_" + client_conn)
-        if flow.request.method.lower() == "options" or flow.request.url.endswith(
-                ("js", "css", "ttf", "jpg", "svg", "gif", "png")):
+        valid_extensions = ("js", "css", "ttf", "jpg", "svg", "gif", "png", 'ts')
+        if flow.request.method.lower() == "options" or any(ext in flow.request.url for ext in valid_extensions):
             return
         if _client and _client["url"] in flow.request.url \
                 and flow.request.method.lower() == _client["method"].lower():
