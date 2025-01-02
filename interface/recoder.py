@@ -56,8 +56,39 @@ class Record:
         name = cls.prefix + name
         data = await rc.l_range(name=name)
         datas = [json.loads(i) for i in data]
-        log.info(datas)
         return datas
+
+    @classmethod
+    async def deduplication(cls, key_name: str):
+        """对url 去重"""
+        name = cls.prefix + key_name
+        data = await rc.l_range(name=name)
+        if not data:
+            log.info(f"No data found for key: {name}")
+            return
+        seen_urls = set()
+        unique_data = []
+        for item_str in data:
+            try:
+                item = json.loads(item_str)
+                url = item.get('url')
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    unique_data.append(json.dumps(item))
+            except json.JSONDecodeError as e:
+                log.error(f"Failed to parse JSON: {e}, item: {item_str}")
+
+        log.debug(unique_data)
+        await rc.remove_key(name)
+        # 使用 pipeline 批量插入数据
+        pipeline = rc.r.pipeline()
+
+        for item in unique_data:
+            # 将去重后的数据批量推送到 Redis 列表
+            pipeline.rpush(name, item)  # 或者 json.dumps(item) 如果是 JSON 格式
+
+        # 执行 pipeline 中的所有命令
+        await pipeline.execute()
 
 
 class InterfaceRecoder:
@@ -72,7 +103,6 @@ class InterfaceRecoder:
         if _client and _client["url"] in flow.request.url \
                 and flow.request.method.upper() in methods:
             ir = RecordRequest(flow)
-            log.debug(ir.map)
             await rc.l_push("record_" + _client['uid'], ir.map)
 
 
@@ -98,7 +128,8 @@ class RecordRequest:
     def set_Headers(self):
         if self.flow.request.headers:
             _headers = dict(self.flow.request.headers)
-            self.headers = [dict(key=k, value=v) for k, v in _headers.items()]
+            self.headers = [dict(key=k, value=v, id=GenerateTools.uid()) for k, v in _headers.items()
+                            if k not in ["content-length"]]
 
     def set_Body(self):
         """
@@ -109,7 +140,6 @@ class RecordRequest:
         :return:
         """
         requestType = self.flow.request.headers.get("Content-Type")
-        log.warning(f"requestType: {requestType}")
 
         if "json" in requestType:
             return self._is_json()
