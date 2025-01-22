@@ -114,7 +114,7 @@ class RecordRequest:
     params: Params = None
     body: dict | None = None
     data: Data = None
-    bodyType: int | None = None
+    body_type: int | None = None
     response: str | None = None
 
     def __init__(self, flow: http.HTTPFlow) -> None:
@@ -169,17 +169,17 @@ class RecordRequest:
 
     def _is_json(self):
         try:
-            self.bodyType = InterfaceRequestTBodyTypeEnum.Json
+            self.body_type = InterfaceRequestTBodyTypeEnum.Json
             self.body = json.loads(self.flow.request.text)
         except json.decoder.JSONDecodeError as e:
             log.error(e)
 
     def _is_data(self):
-        self.bodyType = InterfaceRequestTBodyTypeEnum.Data
+        self.body_type = InterfaceRequestTBodyTypeEnum.Data
         self.data = self.__parse_kv_text(self.flow.request.text)
 
     def _is_params(self):
-        self.bodyType = InterfaceRequestTBodyTypeEnum.Null
+        self.body_type = InterfaceRequestTBodyTypeEnum.Null
         try:
             query = self.flow.request.query
             self.params = [{"key": k, "value": v} for k, v in dict(query).items()]
@@ -218,5 +218,5 @@ class RecordRequest:
             params=self.params,
             data=self.data,
             body=self.body,
-            bodyType=self.bodyType)
+            body_type=self.body_type)
         return json.dumps(m, ensure_ascii=False)

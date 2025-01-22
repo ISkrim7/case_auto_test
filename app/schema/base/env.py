@@ -6,7 +6,7 @@ class EnvField(BaseModel):
     id: int | None = None
     uid: str | None = None
     name: str | None = None
-    desc: str | None = None
+    description: str | None = None
     host: str | None = None
     port: str | None = None
     project_id: int | None = None

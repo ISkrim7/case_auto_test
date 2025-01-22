@@ -6,7 +6,7 @@ class EnvModel(BaseModel):
     __tablename__ = 'env'
 
     name = Column(String(50), nullable=False, comment="环境名称")
-    desc = Column(String(200), nullable=True, comment="环境描述")
+    description = Column(String(200), nullable=True, comment="环境描述")
     host = Column(String(200), nullable=False, comment="环境host")
     port = Column(String(20), nullable=True, comment="环境host")
     project_id = Column(INTEGER,

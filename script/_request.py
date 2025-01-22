@@ -58,7 +58,7 @@ a = {'url': 'https://sso.bacic5i5j.com/login?service=https://beijing.cbs.bacic5i
               {'key': 'lt', 'value': 'LT-1638152-sgfq5ojjuhUQR0II7bp13NAX2QYf6c'},
               {'key': 'execution', 'value': 'e1s1'}, {'key': '_eventId', 'value': 'submit'}],
      'body': None,
-     'bodyType': 2}
+     'body_type': 2}
 b = {'url': 'https://miao.baidu.com/abdr?_o=https%3A%2F%2Ffanyi.baidu.com', 'method': 'POST',
      'headers': [{'key': 'Host', 'value': 'miao.baidu.com'}, {'key': 'Connection', 'value': 'keep-alive'},
                  {'key': 'Content-Length', 'value': '2311'}, {'key': 'sec-ch-ua-platform', 'value': '"Windows"'},
@@ -74,7 +74,7 @@ b = {'url': 'https://miao.baidu.com/abdr?_o=https%3A%2F%2Ffanyi.baidu.com', 'met
                  {'key': 'Accept-Language', 'value': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6'},
                  {'key': 'Cookie',
                   'value': 'BIDUPSID=83FD2B8893D28ED9A3F2936A2D06BA68; PSTM=1708229511; BAIDUID=83FD2B8893D28ED9E279CCA797B14669:FG=1; ab_jid=a242eabfcfcfeaa8352664c0a62e1f0d4d1e; ab_jid_BFESS=a242eabfcfcfeaa8352664c0a62e1f0d4d1e; MCITY=-131%3A; BDUSS=ZzMlRVUjNhZUVwN1RxU0JRVEhVY2U3VWdCbzNKakxXeU9HUElkSzcwUzFWTnhtRVFBQUFBJCQAAAAAAAAAAAEAAADZXUnZzfW087~JdXUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALXHtGa1x7Rmdk; BDUSS_BFESS=ZzMlRVUjNhZUVwN1RxU0JRVEhVY2U3VWdCbzNKakxXeU9HUElkSzcwUzFWTnhtRVFBQUFBJCQAAAAAAAAAAAEAAADZXUnZzfW087~JdXUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALXHtGa1x7Rmdk; ab_bid=1ea69785c59738d981566666813ecbbcfb57; BAIDUID_BFESS=83FD2B8893D28ED9E279CCA797B14669:FG=1; ZFY=tA2:AqWe8kGSivWKGjzBOcKP0rr3CnEIMcRPmk:A22EiM:C; H_WISE_SIDS=60277_61027_61217_61245_61246_60853_61367_61391_61392_61389_61434_61430_61493_61519_61529_61360; BA_HECTOR=2ga4a4a50kah01248k848k8l917bel1jms3851u; H_PS_PSSID=60277_61027_61217_60853_61391_61430_61519_61529_61360; delPer=0; PSINO=2; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; H_WISE_SIDS_BFESS=60277_61027_61217_61245_61246_60853_61367_61391_61392_61389_61434_61430_61493_61519_61529_61360; RT="z=1&dm=baidu.com&si=26938f42-37c8-428a-a0d4-a0510dba43e9&ss=m56ip5lt&sl=0&tt=0&bcn=https%3A%2F%2Ffclog.baidu.com%2Flog%2Fweirwood%3Ftype%3Dperf"'}],
-     'params': [{'key': '_o', 'value': 'https://fanyi.baidu.com'}], 'data': None, 'body': None, 'bodyType': 0}
+     'params': [{'key': '_o', 'value': 'https://fanyi.baidu.com'}], 'data': None, 'body': None, 'body_type': 0}
 
 if __name__ == '__main__':
     get_send()

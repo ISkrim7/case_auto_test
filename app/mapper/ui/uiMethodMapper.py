@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/1/21# @Author : cyq# @File : uiMethodMapper# @Software: PyCharm# @Desc:from app.mapper import Mapperfrom app.model.ui import UICaseMethodOptionModelclass UIMethodMapper(Mapper):    __model__ = UICaseMethodOptionModel
