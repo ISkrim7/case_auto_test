@@ -52,7 +52,6 @@ class PageMethods:
         :return:
         """
         try:
-
             async with page.expect_popup() as p:
                 locator = await PageMethods.get_locator(page, step)
                 # 找到元素方法
@@ -80,6 +79,7 @@ class PageMethods:
                 element_locator = page.frame_locator(step.iframe_name).locator(step.locator)
             else:
                 element_locator = page.locator(step.locator)
+
             await PageMethods.to_scroll(element_locator)
             return element_locator
         except Exception as e:

@@ -7,8 +7,8 @@ log = MyLoguru().get_logger()
 
 class SocketSender:
     uid: str = None
-    starterId:int =None
-    user:User=None
+    starterId: int = None
+    user: User = None
     prefix: str = ""
 
     def __init__(self, user: User = None):
@@ -17,7 +17,6 @@ class SocketSender:
             self.user = user
             self.uid = user.uid
 
-
     async def setCasePrefix(self, uid: str):
         self.prefix = self.prefix + "caseId = {uid}"
 
@@ -25,11 +24,13 @@ class SocketSender:
         try:
             msg = f"{GenerateTools.getTime(1)} 🚀 🚀 🟰🟰 {msg} \n"
             log.info(msg)
+            self.logs.append(msg)
             await io.log_emit(msg, uid=self.uid)
         except Exception as e:
             log.error(e)
 
-    async def over(self, reportId: int = None):
+
+    async def over(self, reportId: int | str = None):
         return await io.log_emit_over(rId=reportId, uid=self.uid)
 
     async def clear_logs(self):

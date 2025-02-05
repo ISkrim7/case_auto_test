@@ -13,5 +13,13 @@ class EnvModel(BaseModel):
                         ForeignKey('project.id', ondelete='CASCADE'),
                         nullable=False, comment="项目所属")
 
+
+    @property
+    def url(self) -> str:
+        domain = self.host
+        if self.port:
+            domain += f":{self.port}"
+        return domain
+
     def __repr__(self):
         return f"<{EnvModel.__name__} {self.name} host={self.host} port={self.port}>"

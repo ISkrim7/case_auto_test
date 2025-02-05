@@ -25,14 +25,14 @@ class BrowserContextSingleton:
 
     @classmethod
     async def _create_context(cls):
-        async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch(headless=Config.UI_Headless,
+        playwright =  await async_playwright().start()
+        browser = await playwright.chromium.launch(headless=Config.UI_Headless,
                                                        timeout=Config.UI_Timeout,
                                                        slow_mo=Config.UI_SLOW)
-            context = await browser.new_context()
-            context.set_default_timeout(Config.UI_Timeout)
-            log.info("BrowserContext initialized")
-            return cls(playwright, browser, context)
+        context = await browser.new_context()
+        context.set_default_timeout(Config.UI_Timeout)
+        log.info("BrowserContext initialized")
+        return cls(playwright, browser, context)
 
     async def get_page(self) -> Page:
         return await self.context.new_page()
@@ -61,37 +61,3 @@ class BrowserContextSingleton:
 # 获取 BrowserContext 实例
 async def get_browser_context():
     return await BrowserContextSingleton.get_instance()
-#
-
-async def main():
-    try:
-        # 获取 BrowserContext 实例
-        browser_context = await get_browser_context()
-        log.info("BrowserContext instance obtained")
-
-        # 创建一个新的页面
-        page = await browser_context.get_page()
-        log.info("New page created")
-
-        # 导航到一个示例网站
-        await page.goto("https://www.baidu.com")
-
-        # 获取页面标题
-        title = await page.title()
-        log.info(f"Page title: {title}")
-
-        # 关闭页面
-        await BrowserContextSingleton.close_page(page)
-        log.info("Page closed")
-
-        # 关闭 BrowserContext
-        await browser_context.shutdown()
-        log.info("BrowserContext shutdown")
-
-    except Exception as e:
-        log.error(f"An error occurred: {e}")
-
-# 运行主函数
-if __name__ == "__main__":
-    asyncio.run(main())
-

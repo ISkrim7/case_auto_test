@@ -14,7 +14,7 @@ class APIOn:
     async def invoke(page: Page,
                      step: UICaseStepsModel,
                      io: SocketSender,
-                     em: ExtractManager):
+                     em: ExtractManager,**kwargs):
         """
         interface 单次执行
         :param page:

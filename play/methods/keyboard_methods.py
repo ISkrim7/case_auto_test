@@ -11,7 +11,7 @@ class KeyboardMethods:
     async def invoke(page: Page,
                      step: UICaseStepsModel,
                      io: SocketSender,
-                     em: ExtractManager):
+                     em: ExtractManager,**kwargs):
         """
         异步调用键盘操作。
 

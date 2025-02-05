@@ -18,6 +18,22 @@ class CustomizeMethod:
     """
 
     @staticmethod
+    async def invoke(page: Page, step: UICaseStepsModel, io: SocketSender, em: ExtractManager):
+        """
+        执行方法
+        :param page:
+        :param step:
+        :param io:SocketSender
+        :param em:ExtractManager
+        :return:
+        """
+        try:
+            await getattr(CustomizeMethod, step.method)(page, step, io, em)
+
+        except Exception as e:
+            raise e
+
+    @staticmethod
     async def get_attr(page: Page, step: UICaseStepsModel, io: SocketSender, em: ExtractManager):
         """
         获取locator上的属性
@@ -114,8 +130,8 @@ class CustomizeMethod:
             locator = await PageMethods.get_locator(page, step)
             # 找到元素方法
             fill_value = await em.transform_target(step.value)
-            await locator.fill(str(fill_value))
             await io.send(f"输入 >> {fill_value}")
+            await locator.fill(str(fill_value))
         except Exception as e:
             raise e
 
