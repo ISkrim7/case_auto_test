@@ -15,6 +15,24 @@ class SubStepMapper(Mapper):
     __model__ = SubStepModel
 
     @classmethod
+    async def copy_sub(cls, session: AsyncSession, oldStepId: int, newStepId: int, cr: User):
+        try:
+            exe = await session.execute(
+                select(SubStepModel).where(SubStepModel.stepId == oldStepId)
+                .order_by(SubStepModel.order.asc())
+            )
+            oldSubs = exe.scalars().all()
+            for index, old_sub in enumerate(oldSubs, start=1):
+                new_sub = old_sub.copy_map
+                new_sub['creator'] = cr.id
+                new_sub['creatorName'] = cr.username
+                new_sub['stepId'] = newStepId
+                new_sub['order'] = index
+                await cls.save_no_session(session, **new_sub)
+        except Exception as e:
+            raise e
+
+    @classmethod
     async def add_sub(cls, cr: User, stepId: int, **kwargs):
         try:
             async with async_session() as session:
