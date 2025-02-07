@@ -34,6 +34,22 @@ class CustomizeMethod:
             raise e
 
     @staticmethod
+    async def wait(page: Page, step: UICaseStepsModel, io: SocketSender, em: ExtractManager):
+        """
+        执行方法
+        :param page:
+        :param step:
+        :param io:SocketSender
+        :param em:ExtractManager
+        :return:
+        """
+        try:
+            await io.send(f"wait {step.value} ...")
+            await page.wait_for_timeout(float(step.value))
+        except Exception as e:
+            raise e
+
+    @staticmethod
     async def get_attr(page: Page, step: UICaseStepsModel, io: SocketSender, em: ExtractManager):
         """
         获取locator上的属性
@@ -181,7 +197,7 @@ class CustomizeMethod:
         :return:
 
         """
-        if isinstance(step,str):
+        if isinstance(step, str):
             url = await em.transform_target(step)
         else:
             url = await em.transform_target(step.value)
@@ -192,7 +208,6 @@ class CustomizeMethod:
         except Exception as e:
             log.error(f"An error occurred: {e}")
             raise e
-
 
 
 CustomizeMethods = [name for name, member in inspect.getmembers(CustomizeMethod, predicate=inspect.isfunction)]
