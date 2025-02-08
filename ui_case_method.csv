@@ -1,0 +1,14 @@
+Column,Value (1),Value (2),Value (3),Value (4),Value (5),Value (6),Value (7),Value (8),Value (9)
+label,点击,跳转,输入,断言：页面标题,断言：页面URL,断言：存在元素存在attr,断言：存在文案,断言：元素已加载,等待
+value,click,goto,to_fill,expect.to_have_title,expect.to_have_url,expect.to_have_attribute,expect.to_have_text,expect.to_be_attached,wait
+description,dewc,跳转到url,输入值,value=预期页面	,value=预期url,"demo:""id:xx"" 断言元素属性id是xx（冒号是关键）",value=xxx 断言元素文案xxx,元素已加载到Dom,手动等待 单位ms
+need_locator,1,2,1,2,2,1,1,1,2
+need_value,2,1,1,1,1,1,1,2,1
+id,1,2,3,4,5,6,7,8,9
+uid,e754e778,8a883481,a0034c5f,2cec10aa,37a6e19b,58e90eac,4e2b6198,4eb184df,3b2981b5
+create_time,2025-01-21 15:57:00,2025-01-22 13:44:51,2025-02-03 10:01:18,2025-02-05 17:48:43,2025-02-06 17:01:52,2025-02-06 17:03:58,2025-02-06 17:04:53,2025-02-06 17:05:36,2025-02-07 15:23:38
+update_time,2025-01-21 16:02:10,,2025-02-03 11:16:51,2025-02-06 17:02:05,2025-02-06 17:02:18,,2025-02-06 17:05:01,,
+creator,9,9,9,9,9,9,9,9,9
+creatorName,admin,admin,admin,admin,admin,admin,admin,admin,admin
+updater,9,,9,9,9,,9,,
+updaterName,admin,,admin,admin,admin,,admin,,
