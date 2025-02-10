@@ -11,6 +11,7 @@ class SocketSender:
     user: User = None
     prefix: str = ""
 
+
     def __init__(self, user: User = None):
         self.logs = []
         if user is not None:
@@ -29,9 +30,11 @@ class SocketSender:
         except Exception as e:
             log.error(e)
 
-
     async def over(self, reportId: int | str = None):
         return await io.log_emit_over(rId=reportId, uid=self.uid)
 
     async def clear_logs(self):
         self.logs = []
+
+    def __repr__(self):
+        return f"SocketSender(uid={self.uid} user= {self.user}) "
