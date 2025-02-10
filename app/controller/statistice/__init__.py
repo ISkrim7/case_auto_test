@@ -1,1 +1,0 @@
-#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/2/10# @Author : cyq# @File : __init__.py# @Software: PyCharm# @Desc:from fastapi import APIRouterrouter = APIRouter(prefix="/statistics", tags=["统计"])
