@@ -1,0 +1,48 @@
+from fastapi import APIRouter, Depends
+from app.controller import Authentication
+from app.mapper.interface.interfaceGroupMapper import InterfaceGroupMapper
+from app.model.base import User
+from app.response import Response
+from app.schema.interface.interfaceGroupSchema import *
+from utils import MyLoguru, log
+
+LOG = MyLoguru().get_logger()
+router = APIRouter(prefix="/interface/group", tags=['自动化接口步骤'])
+
+
+@router.post("/insert", description="添加组")
+async def insert_group(group: InsertInterfaceGroupSchema, cr: User = Depends(Authentication())):
+    group = await InterfaceGroupMapper.save(creatorUser=cr, **group.dict())
+    return Response.success(group)
+
+
+@router.get("/detail", description="添加组")
+async def get_group(groupId: int, cr: User = Depends(Authentication())):
+    group = await InterfaceGroupMapper.get_by_id(ident=groupId)
+    return Response.success(group)
+
+
+@router.post("/update", description="更新组")
+async def update_group(group: UpdateInterfaceGroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.update_by_id(updateUser=cr, **group.dict(exclude_unset=True,
+                                                                        exclude_none=True, ))
+    return Response.success()
+
+
+@router.post("/page", description="组分页")
+async def page_group(group: PageInterfaceGroupSchema, cr: User = Depends(Authentication())):
+    data = await InterfaceGroupMapper.page_query(**group.dict(exclude_unset=True,
+                                                              exclude_none=True, ))
+    return Response.success(data)
+
+
+@router.post("/remove", description="删除")
+async def remove_group(group: RemoveInterfaceGroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.delete_by_id(group.id)
+    return Response.success()
+
+
+@router.post("/association/apis", description="关联api")
+async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.association_common_apis(**info.dict())
+    return Response.success()
