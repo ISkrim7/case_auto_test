@@ -48,9 +48,9 @@ class StatisticsMapper:
                         select(
                             InterfaceTaskResultModel.runDay.label("date"),
                             func.count().label("total_num"),  # 总数量
-                            func.sum(case((InterfaceTaskResultModel.status == "SUCCESS", 1), else_=0)).label(
+                            func.sum(case((InterfaceTaskResultModel.result == "SUCCESS", 1), else_=0)).label(
                                 "success_num"),  # 成功数量
-                            func.sum(case((InterfaceTaskResultModel.status == "FAIL", 1), else_=0)).label("fail_num")
+                            func.sum(case((InterfaceTaskResultModel.result == "FAIL", 1), else_=0)).label("fail_num")
                             # 失败数量
                         ).where(
                             InterfaceTaskResultModel.runDay >= GenerateTools.get_date_days_ago(n)
@@ -65,9 +65,9 @@ class StatisticsMapper:
                         select(
                             UICaseTaskResultBaseModel.run_day.label("date"),
                             func.count().label("total_num"),  # 总数量
-                            func.sum(case((UICaseTaskResultBaseModel.status == "SUCCESS", 1), else_=0)).label(
+                            func.sum(case((UICaseTaskResultBaseModel.result == "SUCCESS", 1), else_=0)).label(
                                 "success_num"),  # 成功数量
-                            func.sum(case((UICaseTaskResultBaseModel.status == "FAIL", 1), else_=0)).label("fail_num")
+                            func.sum(case((UICaseTaskResultBaseModel.result == "FAIL", 1), else_=0)).label("fail_num")
                             # 失败数量
                         ).where(
                             UICaseTaskResultBaseModel.run_day >= GenerateTools.get_date_days_ago(n)
@@ -81,6 +81,7 @@ class StatisticsMapper:
                     )
                     result['api_tasks'] = _format_task_data(api_task.all(), "API")
                     result['ui_tasks'] = _format_task_data(ui_task.all(), "UI")
+                    log.debug(result)
                     return result
 
         except Exception as e:
