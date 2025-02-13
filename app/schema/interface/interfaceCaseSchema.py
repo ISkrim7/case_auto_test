@@ -43,6 +43,12 @@ class AddInterfaceCaseCommonAPISchema(BaseModel):
     commonApis: List[int]
 
 
+class AddInterfaceCaseCommonGROUPSchema(BaseModel):
+    caseId: int
+    groupIds: List[int]
+
+
+
 class AddInterfaceApi2Case(BaseModel):
     caseId: int
     apiId: int

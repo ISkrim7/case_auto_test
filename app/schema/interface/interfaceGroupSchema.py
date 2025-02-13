@@ -14,12 +14,15 @@ class InterfaceApiGroupFieldSchema(BaseModel):
     name: str | None = None
     description: str | None = None
     api_num: int = 0
+    project_id: int | None = None
+    part_id: int | None = None
 
 
 class InsertInterfaceGroupSchema(InterfaceApiGroupFieldSchema):
     name: str
     description: str
-
+    project_id:int
+    part_id:int
 
 class UpdateInterfaceGroupSchema(InterfaceApiGroupFieldSchema):
     id: int
@@ -33,10 +36,13 @@ class PageInterfaceGroupSchema(InterfaceApiGroupFieldSchema, PageSchema):
     ...
 
 
-class AssociationAPI2GroupSchema(BaseModel):
-    apis: List[int]
+class AssociationAPIS2GroupSchema(BaseModel):
+    apiIds: List[int]
     groupId: int
 
+class AssociationAPI2GroupSchema(BaseModel):
+    apiId: int
+    groupId: int
 
 class InterfaceGroupDetailSchema(BaseModel):
     groupId: int

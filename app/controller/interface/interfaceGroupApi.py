@@ -4,6 +4,9 @@ from app.mapper.interface.interfaceGroupMapper import InterfaceGroupMapper
 from app.model.base import User
 from app.response import Response
 from app.schema.interface.interfaceGroupSchema import *
+from interface.io_sender import APISocketSender
+from interface.runner import InterFaceRunner
+from interface.starter import Starter
 from utils import MyLoguru, log
 
 LOG = MyLoguru().get_logger()
@@ -42,7 +45,48 @@ async def remove_group(group: RemoveInterfaceGroupSchema, cr: User = Depends(Aut
     return Response.success()
 
 
-@router.post("/association/apis", description="关联api")
-async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
+@router.post("/add_association/apis", description="关联apis")
+async def association_apis(info: AssociationAPIS2GroupSchema, cr: User = Depends(Authentication())):
     await InterfaceGroupMapper.association_common_apis(**info.dict())
     return Response.success()
+
+
+@router.post("/add_association/api", description="关联api")
+async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.association_api(**info.dict())
+    return Response.success()
+
+
+@router.post("/copy_association/api", description="关联api")
+async def copy_association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.copy_association_api(cr=cr, **info.dict())
+    return Response.success()
+
+
+@router.get("/query_association/apis", description="关联api")
+async def association_apis(groupId: int, cr: User = Depends(Authentication())):
+    apis = await InterfaceGroupMapper.query_apis(groupId)
+    return Response.success(apis)
+
+
+@router.post("/remove_association/api", description="关联api")
+async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.remove_api(info.groupId, info.apiId)
+    return Response.success()
+
+
+@router.post("/reorder_association/apis", description="关联api")
+async def association_apis(info: AssociationAPIS2GroupSchema, cr: User = Depends(Authentication())):
+    await InterfaceGroupMapper.reorder_apis(**info.dict())
+    return Response.success()
+
+
+@router.get("/try", description="关联api")
+async def try_group(groupId: int, user: User = Depends(Authentication())):
+    logger = APISocketSender(user.uid)
+    _starter = Starter(user)
+    resp = await InterFaceRunner(
+        starter=_starter,
+        io=logger
+    ).try_group(groupId)
+    return Response.success(resp)
