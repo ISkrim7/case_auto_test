@@ -31,8 +31,8 @@ class ExecResponseExtract:
                     extract['value'] = value
                 case int(InterfaceExtractTargetVariablesEnum.RequestCookieExtract):
                     #
-                    log.error(f'暂不支持 ={self.response.request.headers}')
-                    log.error(f'暂不支持 ={self.response.cookies}')
+                    log.error(f'response.request.headers ={self.response.request.headers}')
+                    log.error(f'response.cookies ={self.response.cookies}')
                     # jp = MyJsonPath(jsonBody=json.load(self.response.cookies),
                     #                 expr=extract['value'])
                     # value = await jp.value()
