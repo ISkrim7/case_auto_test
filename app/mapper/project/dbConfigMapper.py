@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/2/17# @Author : cyq# @File : dbConfigMapper# @Software: PyCharm# @Desc:from app.mapper import Mapperfrom app.model.base.db_config import DBConfigclass DbConfigMapper(Mapper):    __model__ = DBConfig
