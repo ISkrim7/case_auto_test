@@ -60,11 +60,41 @@
 
 ### 🔍 **API 详情**
 
-查看单个接口的详细信息：
+***查看单个接口的详细信息***
 
 ![API详情](resource/detail.png)
 
 ---
+
+***前置操作***
+
+![前置](resource/before1.png)
+
+![前置](resource/before2.png)
+
+![前置](resource/before3.png)
+
+---
+
+***响应提取***
+
+![extract](resource/extract.png)
+
+***断言***
+
+![assert](resource/assert.png)
+
+
+**请求变量写入**
+
+![assert](resource/var1.png)
+![assert](resource/var0.png)
+支持
+- url
+- header
+- query
+- body
+- exec sql
 
 ### 🖱️ **APITry**
 
@@ -80,6 +110,7 @@
 
 - 添加公共 API
 - 手动录入 API
+- 添加API GROUP
 - API 执行拖拽排序
 - 支持基本的 CRUD 操作
 
@@ -138,7 +169,7 @@
 2. 编写config：
 
     - 配置自己的数据库等相关内容
-    
+
 3. 安装所需依赖：
 
     ```bash
@@ -152,8 +183,8 @@
 欢迎提交 Issues 或 Pull Requests，若有任何问题或建议，随时与我联系。
 
 ---
-> 联系我 
-> 
+> 联系我
+>
 ![](resource/wx.png)
 
 > 一起推动接口自动化测试工具的成长与发展！
