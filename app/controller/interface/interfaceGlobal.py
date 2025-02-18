@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/2/18# @Author : cyq# @File : interfaceGlobal# @Software: PyCharm# @Desc:from fastapi import APIRouterfrom utils import MyLoguruLOG = MyLoguru().get_logger()router = APIRouter(prefix="/interface/global", tags=['全局配置'])
