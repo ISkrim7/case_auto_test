@@ -33,8 +33,8 @@ async def update_group(group: UpdateInterfaceGroupSchema, cr: User = Depends(Aut
 
 
 @router.post("/page", description="组分页")
-async def page_group(group: PageInterfaceGroupSchema, cr: User = Depends(Authentication())):
-    data = await InterfaceGroupMapper.page_query(**group.dict(exclude_unset=True,
+async def page_group(group: PageInterfaceGroupSchema, _: User = Depends(Authentication())):
+    data = await InterfaceGroupMapper.page_by_part(**group.dict(exclude_unset=True,
                                                               exclude_none=True, ))
     return Response.success(data)
 
