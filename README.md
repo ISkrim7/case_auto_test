@@ -84,12 +84,12 @@
 
 ![assert](resource/assert.png)
 
-
 **请求变量写入**
 
 ![assert](resource/var1.png)
 ![assert](resource/var0.png)
 支持
+
 - url
 - header
 - query
@@ -160,15 +160,58 @@
 
 ### 安装依赖
 
-1. 克隆项目：
+1. 克隆项目
 
-    ```bash
-    git clone <your-repository-url>
-    cd <your-repository-directory>
-    ```
-2. 编写config：
+2. 编写config
 
     - 配置自己的数据库等相关内容
+        - config.py
+        - 主要是下面 按照本地情况自定义
+
+```python
+class LocalConfig(BaseConfig):
+    SERVER_HOST: str = "127.0.0.1"
+    SERVER_PORT: int = 5050
+    DOMAIN = f"http://{SERVER_HOST}:{SERVER_PORT}"
+    UI_Headless = True
+    UI_Timeout = 5000
+    UI_SLOW = 500
+    UI_ERROR_PATH = DOMAIN + "/file/ui_case/uid="
+    FILE_AVATAR_PATH = DOMAIN + "/file/avatar/uid="
+    APS = False
+    Record_Proxy = False
+    MYSQL_SERVER = "127.0.0.1"
+    MYSQL_PASSWORD = "your password"
+    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://{}:{}@{}:{}/{}'.format(
+        'root', MYSQL_PASSWORD, MYSQL_SERVER, BaseConfig.MYSQL_PORT, BaseConfig.MYSQL_DATABASE)
+
+    ASYNC_SQLALCHEMY_URI = f'mysql+aiomysql://root:{MYSQL_PASSWORD}'
+    f'@{MYSQL_SERVER}:{BaseConfig.MYSQL_PORT}/{BaseConfig.MYSQL_DATABASE}'
+
+
+# UI_TASK_URL = f"{DOMAIN}:{BaseConfig.STRUCTURE_WEB_SERVER_PORT}/ui/task/detail/taskId="
+# UI_REPORT_URL = f"{DOMAIN}:{BaseConfig.STRUCTURE_WEB_SERVER_PORT}/report/history/uiTask/detail/uid="
+
+REDIS_DB = 0
+REDIS_SERVER = "127.0.0.1"
+REDIS_URL: str = f"redis://{REDIS_SERVER}:{BaseConfig.REDIS_PORT}/{REDIS_DB}"
+
+# 定时任务Stores
+APSJobStores = {
+    'default': RedisJobStore(
+        db=2,  # Redis 数据库编号
+        jobs_key='apscheduler.jobs',  # 存储任务的键
+        run_times_key='apscheduler.run_times',  # 存储任务运行时间的键
+        host=REDIS_SERVER,  # Redis 服务器地址
+        port=BaseConfig.REDIS_PORT,  # Redis 服务器端口
+        password=None  # Redis 密码（如果没有密码，设置为 None）
+    ),
+
+}
+# oracle client 
+CX_Oracle_Client_Dir = "/your/instantclient_23_3"
+
+```
 
 3. 安装所需依赖：
 
@@ -176,15 +219,29 @@
     pip install -r requirements.txt
     ```
 
-4. 执行run.py
+4、安装mysql 、 redis
 
-## 💡 贡献
+5、运行
 
-欢迎提交 Issues 或 Pull Requests，若有任何问题或建议，随时与我联系。
+- 查看main.py
+    - `init_aps` 定时任务开启
+    - `init_db` 创建表
+    - `init_proxy` 开启代理 （暂时不用开，配置关闭就好）
+    - `init_redis` 配合 proxy 使用 也可不用开
+- 执行 run.py
+- 添加admin用户 见这个接口
+```python
+@router.post(path="/registerAdmin", description="添加管理")
+async def register_admin(user: RegisterAdmin) -> Response:
+    await UserMapper.register_admin(**user.dict())
+    return Response.success()
+```
 
----
-> 联系我
+6、前端部署见 [前端项目](https://github.com/Caoyongqi912/caseHubWeb)
+
+
+> 存在疑问？联系我
 >
 ![](resource/wx.png)
 
-> 一起推动接口自动化测试工具的成长与发展！
+
