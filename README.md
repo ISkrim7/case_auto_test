@@ -84,17 +84,21 @@
 
 ![assert](resource/assert.png)
 
-**请求变量写入**
-
-![assert](resource/var1.png)
-![assert](resource/var0.png)
+**变量写入**
 支持
-
 - url
 - header
 - query
 - body
 - exec sql
+
+
+![assert](resource/var1.png)
+![assert](resource/var0.png)
+
+**“抄袭” ApiPost 添加 【引用变量】能力**
+![set_var](resource/set_var.gif)
+
 
 ### 🖱️ **APITry**
 
