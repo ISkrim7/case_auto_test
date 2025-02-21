@@ -18,6 +18,8 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
     is_auto: bool | None = None
     is_send: bool | None = None
     retry: int | None = 0
+    parallel:int | None = 0
+
     send_type: int | None = None
     send_key: str | None = None
 

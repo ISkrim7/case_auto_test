@@ -14,7 +14,6 @@ class InterfaceCaseSchema(BaseModel):
     part_id: int | None = None
     project_id: int | None = None
     error_stop: int | None = None
-    is_common: int | None = None
 
 
 class InsertInterfaceCaseBaseInfoSchema(InterfaceCaseSchema):

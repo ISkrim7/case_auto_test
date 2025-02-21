@@ -30,12 +30,6 @@ class ExecResponseExtract:
                     value = await jp.value()
                     extract['value'] = value
                 case int(InterfaceExtractTargetVariablesEnum.RequestCookieExtract):
-                    #
-                    log.error(f'response.request.headers ={self.response.request.headers}')
-                    log.error(f'response.cookies ={self.response.cookies}')
-                    # jp = MyJsonPath(jsonBody=json.load(self.response.cookies),
-                    #                 expr=extract['value'])
-                    # value = await jp.value()
                     extract['value'] = self.response.request.headers.get("cookie", None)
                 case int(InterfaceExtractTargetVariablesEnum.ResponseTextExtract):
                     """正则"""
