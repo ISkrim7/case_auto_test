@@ -41,7 +41,7 @@ async def page_group(group: PageInterfaceGroupSchema, _: User = Depends(Authenti
 
 @router.post("/remove", description="删除")
 async def remove_group(group: RemoveInterfaceGroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.delete_by_id(group.id)
+    await InterfaceGroupMapper.remove_group(group.id)
     return Response.success()
 
 

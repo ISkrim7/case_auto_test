@@ -1,12 +1,13 @@
-from typing import List
+from typing import List, Sequence
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mapper import Mapper
 from app.model import async_session
 from app.model.base import User
 from app.model.interface import InterfaceGroupModel, group_api_association, InterfaceModel
+from utils import log
 
 
 async def get_last_index(session: AsyncSession, groupId: int) -> int:
@@ -39,7 +40,7 @@ async def insert_group_api(session: AsyncSession, groupId: int, apiId: int, step
             )
         )
         if result.scalar() is not None:
-            return
+            return False
         await session.execute(
             group_api_association.insert().values(
                 api_group_id=groupId,
@@ -47,6 +48,7 @@ async def insert_group_api(session: AsyncSession, groupId: int, apiId: int, step
                 step_order=step_order
             )
         )
+        return True
     except Exception as e:
         raise e
 
@@ -108,10 +110,13 @@ class InterfaceGroupMapper(Mapper):
             async with async_session() as session:
                 async with session.begin():
                     group: InterfaceGroupModel = await cls.get_by_id(ident=groupId, session=session)
-                    group.api_num = len(apiIds)
                     last_index = await get_last_index(session=session, groupId=groupId)
                     for index, apiId in enumerate(apiIds, start=last_index + 1):
-                        await insert_group_api(session=session, groupId=groupId, apiId=apiId, step_order=index)
+                        flag =  await insert_group_api(session=session, groupId=groupId, apiId=apiId, step_order=index)
+                        if flag:
+                            group.api_num += 1
+
+
 
         except Exception as e:
             raise e
@@ -191,5 +196,68 @@ class InterfaceGroupMapper(Mapper):
                                 step_order=index
                             )
                         )
+        except Exception as e:
+            raise e
+
+    @staticmethod
+    async def set_group_when_api_remove(session: AsyncSession, apiId: int):
+        """
+        当 api删除
+        计算数量
+        :param session:
+        :param apiId:
+        :return:
+        """
+        try:
+
+            query = await session.scalars(select(InterfaceGroupModel).join(
+                group_api_association,
+                group_api_association.c.api_id == InterfaceGroupModel.id
+            ).where(
+                group_api_association.c.api_id == apiId
+            ))
+            groups: Sequence[InterfaceGroupModel] = query.all()
+            log.debug(groups)
+            if groups:
+                for group in groups:
+                    group.api_num -= 1
+
+        except Exception as e:
+            raise e
+
+    @classmethod
+    async def remove_group(cls,groupId:int):
+        """
+        删除逻辑
+        公共用例解除关联
+        私有api 删除
+        :param groupId:
+        :return:
+        """
+        try:
+            async with async_session() as session:
+                async with session.begin():
+                    group = await cls.get_by_id(groupId,session)
+                    # 查询api
+                    query = await session.execute(
+                        select(InterfaceModel).join(
+                            group_api_association,
+                            group_api_association.c.api_id == InterfaceModel.id
+                        ).where(
+                            group_api_association.c.api_group_id == groupId
+                        )
+                    )
+                    apis = query.scalars().all()
+                    # 删除所有关联
+                    await session.execute(
+                        delete(group_api_association).where(
+                            group_api_association.c.api_group_id == groupId
+                        )
+                    )
+                    # 删除所有非公共API
+                    private_apis = [api for api in apis if not api.is_common]
+                    for api in private_apis:
+                        await session.delete(api)
+                    await session.delete(group)
         except Exception as e:
             raise e
