@@ -69,7 +69,13 @@ class FileManager:
     def json_file_reader(path: str):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        print(data)
+            for i in data:
+                _data = {
+                    'part': i.get("name"),
+                    "data": [{"method": j.get('method'), 'url': j.get('path')} for j in i.get("list")],
+                }
+                print(_data)
+
 
 if __name__ == '__main__':
-    FileManager.json_file_reader("../cyq的项目.json")
+    FileManager.json_file_reader("./api.json")
