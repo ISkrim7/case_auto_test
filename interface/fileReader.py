@@ -45,8 +45,69 @@ class FileReader:
             case InterfaceUploadEnum.Swagger:
                 pass
             case InterfaceUploadEnum.ApiPost:
-                pass
+                return await FileReader._apipost(file)
 
+    @staticmethod
+    async def _apipost(file: UploadFile):
+        data = json.loads(await file.read())
+        post_data = {
+            "part": data.get("name"),
+            "data": []
+        }
+        apis = data.get("apis")
+        if apis:
+            for api in apis:
+                if api.get("target_type") != "api":
+                    continue
+                else:
+                    post_data['data'].append(await FileReader._get_apipost_data(api))
+        return [post_data]
+    @staticmethod
+    async def _get_apipost_data(data: Dict[str, Any]):
+        request_info = {
+            'name': data.get("name"),
+            'method': data.get("method"),
+            'url': data.get("url"),
+            'description': data.get("description", ""),
+        }
+        request = data.get("request")
+        if request:
+            headers: List[Dict[str, Any]] = request.get("header").get("parameter")
+            if headers:
+                request_info['headers'] = [
+                    {
+                        'id': header.get('param_id'),
+                        'key': header.get('key'),
+                        'value': header.get('value'),
+                        'desc': header.get('description'),
+                    }
+                    for header in headers
+                ]
+            query: List[Dict[str, Any]] = request.get("query").get("parameter")
+            if query:
+                request_info['params'] = [
+                    {
+                        'id': q.get('param_id'),
+                        'key': q.get('key'),
+                        'value': q.get('value'),
+                        'desc': q.get('description'),
+                    }
+                    for q in query
+                ]
+
+            mode = request.get("body").get("mode")
+            if mode == "json":
+                request_info['body_type'] = 1
+                try:
+                    request_info['body'] = json.loads(request.get("body").get("raw"))
+                except JSONDecodeError:
+                    request_info['body'] = None
+            elif mode == "form-data":
+                request_info['body_type'] = 1
+            else:
+                request_info['body_type'] = 0
+
+        return request_info
     @staticmethod
     async def _yapi(file: UploadFile) -> List[Dict[str, Any]]:
         """
