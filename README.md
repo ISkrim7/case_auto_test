@@ -56,7 +56,7 @@
 
 展示所有接口的概览：
 
-![API列表](resource/api.png)
+![API列表](resource/api.jpg)
 
 ---
 
@@ -64,43 +64,41 @@
 
 查看单个接口的详细信息
 
-![API详情](resource/detail.png)
+![API详情](resource/api_detail.png)
 
 ---
 
 ### **前置操作**
 
-![前置](resource/before1.png)
+-  **前置变量**
+![前置](resource/api_before1.png)
+- **前置脚本** 
+![前置](resource/api_before2.png)
+- **SQL执行**
+![前置](resource/api_before3.png)
 
-![前置](resource/before2.png)
 
-![前置](resource/before3.png)
-
----
-
-### **响应提取**
-
+- **响应提取**
 ![extract](resource/extract.png)
 
-### **断言**
-
+- **接口断言**
 ![assert](resource/assert.png)
 
-**变量写入支持：**
+- **变量写入支持**
+  - url
+  - header
+  - query
+  - body
+  - exec sql
 
-- url
-- header
-- query
-- body
-- exec sql
+   ![assert](resource/var1.png)
+   ![assert](resource/var0.png)
 
-![assert](resource/var1.png)
-![assert](resource/var0.png)
-
-**“引用变量”能力**
-
+-  **“引用变量”能力**
 ![set_var](resource/set_var.gif)
 
+- **CURL解析导入**
+![curl_var](resource/curl.png)
 ### 🖱️ **APITry**
 
 支持在 UI 中直接执行接口请求，快速验证 API 可用性：
