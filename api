@@ -8,20 +8,3 @@ api Task
 api Group
  | groupId | apiId|
 
-
- curl 'https://aijia-test.5i5j.com/api/project/opt?current=1&pageSize=20&sort=%7B%7D' \
-  -H 'accept: */*' \
-  -H 'accept-language: zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6' \
-  -H 'authorization: Basic ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBaQ0k2TVRRNExDSmxlSEJwY21WelgzUnBiV1VpT2pFM056SXdNRE0yTmpjdU16WXdOVFUwTW4wLlZWT3hLcGlyR29FeldPZUZvVU1NWEdUWGtmdVhHbXdvZUlKSXdDbmE3d006' \
-  -H 'cache-control: no-cache' \
-  -b 'csrftoken=sFyBgd35ZATFixk8RJKvvfF820f6obt1JDoytnAzJJ7L1PyQPpIfz6PoeuHRI0Wl; cna=6154473d4c364434a888adcdbe166789; ser_cookie_id=257F048F-B4BE-E0CD-A539-291B5C9EC652; sensorsdata2015jssdkchannel=%7B%22prop%22%3A%7B%22_sa_channel_landing_url%22%3A%22%22%7D%7D; gr_user_id=d49c260a-0bed-4f7d-bc93-7fcbffed191f; smidV2=20241220175140ce7183876fec4ab37aa1dc86c20e7d9c0027e901e8a57a840; Hm_lvt_94ed3d23572054a86ed341d64b267ec6=1734688301; Hm_lvt_cf8004879455b04c74d33aa164379a1d=1734688301; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%2218ccdda4268324-0118290424cd5ca-1f525637-1484784-18ccdda42692788%22%2C%22first_id%22%3A%22%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%2C%22_latest_wx_ad_click_id%22%3A%22%22%2C%22_latest_wx_ad_hash_key%22%3A%22%22%2C%22_latest_wx_ad_callbacks%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMThjY2RkYTQyNjgzMjQtMDExODI5MDQyNGNkNWNhLTFmNTI1NjM3LTE0ODQ3ODQtMThjY2RkYTQyNjkyNzg4In0%3D%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%22%2C%22value%22%3A%22%22%7D%2C%22%24device_id%22%3A%2218ccdda4268324-0118290424cd5ca-1f525637-1484784-18ccdda42692788%22%7D; HMF_CI=99e1936297ceef6e88e349f8c8c14e8ca0e66331a6b2c8285848b66d2a814862c26864637ed7d1a2a6d9a3b6b1dcb61863a0405262696b13a4b04797ad45194fd4; sl-session=Q/a3Gr8QwWeY5H6e8aCWOw==; suid=70cb04d3-e0de-4594-8e22-228dcb4517ba; clid=e3c1e0f6-f181-4542-a001-c9daa74cbedb' \
-  -H 'pragma: no-cache' \
-  -H 'priority: u=1, i' \
-  -H 'referer: https://aijia-test.5i5j.com/project/List' \
-  -H 'sec-ch-ua: "Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"' \
-  -H 'sec-ch-ua-mobile: ?0' \
-  -H 'sec-ch-ua-platform: "macOS"' \
-  -H 'sec-fetch-dest: empty' \
-  -H 'sec-fetch-mode: cors' \
-  -H 'sec-fetch-site: same-origin' \
-  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
