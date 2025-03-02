@@ -4,7 +4,7 @@ from app.controller import Authentication
 from app.mapper.project.moduleMapper import ModuleMapper
 from app.model.base import User
 from app.response import Response
-from app.schema.base.module import InsertModuleSchema, UpdateModuleSchema, RemoveModuleSchema
+from app.schema.base.module import InsertModuleSchema, UpdateModuleSchema, RemoveModuleSchema, DropModuleSchema
 
 router = APIRouter(prefix="/module", tags=["模块"])
 
@@ -30,6 +30,12 @@ async def update_module(partInfo: UpdateModuleSchema, ur: User = Depends(Authent
 @router.post("/remove", description='删除')
 async def remove_module(partInfo: RemoveModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
     await ModuleMapper.remove_module(partInfo.moduleId)
+    return Response.success()
+
+
+@router.post("/drop", description='删除')
+async def drop_module(partInfo: DropModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
+    await ModuleMapper.drop(**partInfo.dict())
     return Response.success()
 
 

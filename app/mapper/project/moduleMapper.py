@@ -28,7 +28,7 @@ async def list2Tree(datas: List[Module]):
             if not children:
                 children = []
             children.append(d)
-            parent.update({"children": children})
+            parent.update({"children": children,"children_length":len(children)})
     return tree
 
 
@@ -95,4 +95,20 @@ class ModuleMapper(Mapper):
             return (await session.execute(recursive_query)).scalars().all()
         except Exception as e:
             log.error(f"递归查询失败: {e}")
+            raise e
+
+
+    @classmethod
+    async def drop(cls, id: int, targetId: int | None):
+        try:
+            async with async_session() as session:
+                module: Module = await cls.get_by_id(id, session)
+                if targetId:
+                    target_module: Module = await cls.get_by_id(targetId, session)
+                    module.parent_id = target_module.id
+                else:
+                    module.parent_id = None
+                session.add(module)
+                await session.commit()
+        except Exception as e:
             raise e

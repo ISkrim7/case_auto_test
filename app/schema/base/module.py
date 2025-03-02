@@ -23,3 +23,8 @@ class UpdateModuleSchema(BaseModel):
 
 class RemoveModuleSchema(BaseModel):
     moduleId: int
+
+
+class DropModuleSchema(BaseModel):
+    id: int
+    targetId: int | None = None
