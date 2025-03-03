@@ -31,7 +31,7 @@ class InterfaceResultFieldSchema(BaseSchema):
     interfaceName: str | None = None
     interfaceUid: str | None = None
     interfaceProjectId: int | None = None
-    interfacePartId: int | None = None
+    interfaceModuleId: int | None = None
     interfaceEnvId: int | None = None
     starterId: int | None = None
     result: str | None = None

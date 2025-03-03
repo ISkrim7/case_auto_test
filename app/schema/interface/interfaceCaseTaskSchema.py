@@ -2,6 +2,8 @@ from app.schema import PageSchema
 from pydantic import BaseModel
 from typing import List
 
+from enums import ModuleEnum
+
 
 class InterfaceCaseTaskFieldSchema(BaseModel):
     id: int | None = None
@@ -12,7 +14,7 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
     status: str | None = "WAIT"
     level: str | None = None
     total_cases_num: int | None = 0
-    part_id: int | None = None
+    module_id: int | None = None
     project_id: int | None = None
 
     is_auto: bool | None = None
@@ -25,14 +27,14 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
 
 
 class PageInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema, PageSchema):
-    ...
+    module_type:int = ModuleEnum.API_TASK
 
 
 class InsertInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
     title: str
     desc: str
     level: str
-    part_id: int
+    module_id: int
     project_id: int
 
 
@@ -76,7 +78,7 @@ class InterfaceTaskResultSchema(BaseModel):
     taskId: int | None = None
     runDay: str | List[str] | None = None
     interfaceProjectId: int | None = None
-    interfacePartId: int | None = None
+    interfaceModuleId: int | None = None
 
 
 class InterfaceTaskResultDetailSchema(BaseModel):
