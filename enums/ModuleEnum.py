@@ -1,0 +1,1 @@
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/3/3# @Author : cyq# @File : ModuleEnum# @Software: PyCharm# @Desc:class ModuleEnum:    API = 1    API_CASE = 2    API_TASK = 3    UI = 5    UI_CASE = 6    UI_TASK = 7

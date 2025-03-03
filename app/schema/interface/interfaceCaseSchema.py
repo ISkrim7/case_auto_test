@@ -3,6 +3,21 @@ from typing import List
 from app.schema import PageSchema
 from pydantic import BaseModel
 
+__all__ = [
+    "InterfaceCaseSchema",
+    "InsertInterfaceCaseBaseInfoSchema",
+    "OptionInterfaceCaseSchema",
+    "ExecuteInterfaceCaseSchema",
+    "PageInterfaceCaseSchema",
+    "AddInterfaceCaseCommonAPISchema",
+    "AddInterfaceCaseCommonGROUPSchema",
+    "AddInterfaceApi2Case",
+    "RemoveInterfaceApi2Case",
+    "ReorderInterfaceApi2Case",
+]
+
+from enums import ModuleEnum
+
 
 class InterfaceCaseSchema(BaseModel):
     id: int | None = None
@@ -11,7 +26,7 @@ class InterfaceCaseSchema(BaseModel):
     desc: str | None = None
     level: str | None = None
     status: str | None = None
-    part_id: int | None = None
+    module_id: int | None = None
     project_id: int | None = None
     error_stop: int | None = None
 
@@ -21,7 +36,7 @@ class InsertInterfaceCaseBaseInfoSchema(InterfaceCaseSchema):
     desc: str
     level: str
     status: str
-    part_id: int
+    module_id: int
     project_id: int
 
 
@@ -34,8 +49,7 @@ class ExecuteInterfaceCaseSchema(InterfaceCaseSchema):
 
 
 class PageInterfaceCaseSchema(InterfaceCaseSchema, PageSchema):
-    ...
-
+    module_type = ModuleEnum.API_CASE
 
 class AddInterfaceCaseCommonAPISchema(BaseModel):
     caseId: int
@@ -45,7 +59,6 @@ class AddInterfaceCaseCommonAPISchema(BaseModel):
 class AddInterfaceCaseCommonGROUPSchema(BaseModel):
     caseId: int
     groupIds: List[int]
-
 
 
 class AddInterfaceApi2Case(BaseModel):

@@ -51,7 +51,7 @@ class FileReader:
     async def _apipost(file: UploadFile):
         data = json.loads(await file.read())
         post_data = {
-            "part": data.get("name"),
+            "module": data.get("name"),
             "data": []
         }
         apis = data.get("apis")
@@ -121,7 +121,7 @@ class FileReader:
 
         for item in data:
             part_data = {
-                'part': item.get("name"),
+                'module': item.get("name"),
                 'data': []
             }
 
