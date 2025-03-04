@@ -175,8 +175,9 @@
 
     - 配置自己的数据库等相关内容
     - 编辑 `config.py`，根据本地情况进行自定义
-
-    ```python
+    - 初始化数据到数据库 执行 `script/initSQL.sql`
+   
+    ```python 
     MYSQL_DATABASE = 'autoHub' # dbtabase
     
     class LocalConfig(BaseConfig):
@@ -206,10 +207,6 @@
       - 代理 
     - `run.py`
       - 右键直接运行
-    
-4. 创建一个admin
-   - 一切资源入口
-   - `localhost:5050/api/user/registerAdmin`
 
 5.前端部署见 [前端项目](https://github.com/Caoyongqi912/caseHubWeb)
 
