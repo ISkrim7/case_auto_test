@@ -92,9 +92,9 @@ class ModuleMapper(Mapper):
                 async with session.begin():
                     module:Module = await cls.get_by_id(moduleId, session)
                     if module.parent_id is None:
-                        subPartId = await get_subtree_ids(session, moduleId)
-                        if subPartId:
-                            for i in subPartId:
+                        subId = await get_subtree_ids(session, moduleId)
+                        if subId:
+                            for i in subId:
                                 await session.execute(delete(Module).where(Module.id == i))
                     await session.delete(module)
         except Exception as e:

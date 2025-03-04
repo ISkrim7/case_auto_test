@@ -1,10 +1,7 @@
 from typing import TypeVar
 
-from setuptools.command.alias import alias
 from sqlalchemy import select, and_, case
 from sqlalchemy.sql.functions import count, func
-
-from app.mapper import Mapper
 from app.mapper.interface import InterfaceCaseMapper
 from app.mapper.ui.uiCaseMapper import UICaseMapper
 from app.model import async_session, BaseModel

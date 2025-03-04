@@ -120,7 +120,7 @@ class FileReader:
         yapi_data = []
 
         for item in data:
-            part_data = {
+            module_data = {
                 'module': item.get("name"),
                 'data': []
             }
@@ -128,11 +128,11 @@ class FileReader:
             item_list = item.get('list', [])
             if item_list:
                 # 并发处理每个接口的数据
-                part_data['data'] = await asyncio.gather(
+                module_data['data'] = await asyncio.gather(
                     *(FileReader._get_yapi_data(api_data) for api_data in item_list)
                 )
 
-            yapi_data.append(part_data)
+            yapi_data.append(module_data)
 
         return yapi_data
 
