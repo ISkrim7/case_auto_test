@@ -8,3 +8,14 @@ api Task
 api Group
  | groupId | apiId|
 
+
+
+ui case
+ui task
+
+
+
+var   {{xx}}
+func  {{$xx}}
+
+
