@@ -34,7 +34,7 @@ async def remove_module(partInfo: RemoveModuleSchema, ur: User = Depends(Authent
 
 
 @router.post("/drop", description='删除')
-async def drop_module(partInfo: DropModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
+async def drop_module(moduleInfo: DropModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
     await ModuleMapper.drop(**moduleInfo.dict())
     return Response.success()
 
