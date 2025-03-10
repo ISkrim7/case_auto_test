@@ -3,13 +3,14 @@ from faker import Faker
 import time
 from datetime import datetime, timedelta
 
-
+from utils import log
 
 
 class FakerClient:
     faker = Faker(locale="zh_CN")
 
     def value(self, script: str):
+        log.info(f"script = {script}")
         if script.startswith("f_"):
             _script = script.split("f_")[-1]
             return self._get_faker_value(_script)
@@ -27,7 +28,7 @@ class FakerClient:
         except AttributeError as e:
             return ""
 
-    def timeStamp(self) -> int | None:
+    def timestamp(self) -> int | None:
         """
         返回对应时间戳
         ：param t +1s 秒  +1m 分 +1h分钟

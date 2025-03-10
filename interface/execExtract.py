@@ -18,11 +18,9 @@ class ExecResponseExtract:
         :return:
         """
         for extract in extracts:
-            if extract.get("key", None) is None or extract.get("value", None) is None:
-                continue
             match int(extract[InterfaceExtractTargetVariablesEnum.Target]):
                 case InterfaceExtractTargetVariablesEnum.ResponseJsonExtract:
-                    jp = MyJsonPath(jsonBody=self.response.json(),
+                    jp = MyJsonPath(jsonBody=self.response,
                                     expr=extract['value'])
                     value = await jp.value()
                     extract['value'] = value
