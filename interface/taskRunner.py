@@ -2,6 +2,7 @@ import asyncio
 from typing import TypeVar, List
 
 from app.mapper.interface import InterfaceTaskMapper
+from app.mapper.project.pushMapper import PushMapper
 from app.model.base import User
 from app.model.interface import InterfaceModel, InterFaceCaseModel, InterfaceTask, InterfaceTaskResultModel
 from enums import InterfaceAPIResultEnum, StarterEnum
@@ -57,6 +58,8 @@ class TaskRunner:
             task_result.result = self.result
             log.debug(task_result.result)
             await InterfaceAPIWriter.write_interface_task_result(task_result)
+            if self.task.push_id:
+                push = await PushMapper.get_by_id(self.task.push_id)
 
     async def __run_Apis(self, apis: Interfaces, task_result: InterfaceTaskResult):
         """执行关联api"""

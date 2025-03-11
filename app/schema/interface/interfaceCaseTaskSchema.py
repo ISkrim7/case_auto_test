@@ -16,14 +16,9 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
     total_cases_num: int | None = 0
     module_id: int | None = None
     project_id: int | None = None
-
     is_auto: bool | None = None
-    is_send: bool | None = None
     retry: int | None = 0
     parallel:int | None = 0
-
-    send_type: int | None = None
-    send_key: str | None = None
 
 
 class PageInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema, PageSchema):
