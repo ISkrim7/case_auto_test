@@ -7,6 +7,7 @@ from app.model.base import User
 from app.model.interface import InterfaceModel, InterFaceCaseModel, InterfaceTask, InterfaceTaskResultModel
 from enums import InterfaceAPIResultEnum, StarterEnum
 from utils import MyLoguru
+from utils.report import ReportPush
 from .io_sender import APISocketSender
 from .runner import InterFaceRunner
 from .starter import Starter
@@ -27,6 +28,7 @@ class TaskRunner:
     def __init__(self,
                  starter: Starter | None,
                  io: APISocketSender | None):
+
         self.starter = starter
         self.io = io
         self.progress = 0
@@ -60,6 +62,8 @@ class TaskRunner:
             await InterfaceAPIWriter.write_interface_task_result(task_result)
             if self.task.push_id:
                 push = await PushMapper.get_by_id(self.task.push_id)
+                rp = ReportPush(push_type=push.push_type, push_value=push.push_value)
+                await rp.push(self.task, task_result)
 
     async def __run_Apis(self, apis: Interfaces, task_result: InterfaceTaskResult):
         """执行关联api"""
@@ -104,8 +108,7 @@ class TaskRunner:
                 await self.write_process_result(flag, task_result)
             await self.io.clear_logs()
 
-
-    async def write_process_result(self,flag:bool, task_result: InterfaceTaskResult):
+    async def write_process_result(self, flag: bool, task_result: InterfaceTaskResult):
         await self.set_process(task_result)
         if flag:
             task_result.successNumber += 1
