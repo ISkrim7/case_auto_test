@@ -18,11 +18,12 @@ class InterfaceCaseTaskFieldSchema(BaseModel):
     project_id: int | None = None
     is_auto: bool | None = None
     retry: int | None = 0
-    parallel:int | None = 0
+    parallel: int | None = 0
+    push_id: int | None = None
 
 
 class PageInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema, PageSchema):
-    module_type:int = ModuleEnum.API_TASK
+    module_type: int = ModuleEnum.API_TASK
 
 
 class InsertInterfaceCaseTaskSchema(InterfaceCaseTaskFieldSchema):
