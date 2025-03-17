@@ -4,8 +4,8 @@ from json import JSONDecodeError
 from typing import List, Mapping, Dict, Any
 from mitmproxy import http
 from enums import InterfaceRequestTBodyTypeEnum
-from utils import log, rc
-from utils import GenerateTools
+from utils import log, GenerateTools
+from common import rc
 
 Headers = List[Dict[str, Any]] | None
 Params = List[Dict[str, Any]] | None
