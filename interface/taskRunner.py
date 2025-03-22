@@ -3,14 +3,12 @@ from typing import TypeVar, List
 
 from app.mapper.interface import InterfaceTaskMapper
 from app.mapper.project.pushMapper import PushMapper
-from app.model.base import User
 from app.model.interface import InterfaceModel, InterFaceCaseModel, InterfaceTask, InterfaceTaskResultModel
-from enums import InterfaceAPIResultEnum, StarterEnum
+from enums import InterfaceAPIResultEnum
 from utils import MyLoguru
 from utils.report import ReportPush
-from .io_sender import APISocketSender
+from .starter import APIStarter
 from .runner import InterFaceRunner
-from .starter import Starter
 from .writer import InterfaceAPIWriter
 
 log = MyLoguru().get_logger()
@@ -25,12 +23,8 @@ class TaskRunner:
     task: InterfaceTask
     result: str = InterfaceAPIResultEnum.SUCCESS
 
-    def __init__(self,
-                 starter: Starter | None,
-                 io: APISocketSender | None):
-
+    def __init__(self,starter: APIStarter):
         self.starter = starter
-        self.io = io
         self.progress = 0
 
     async def runTask(self, taskId: int):
@@ -73,7 +67,7 @@ class TaskRunner:
             return await self.__run_api_by_sequential_execution(apis, task_result)
 
         semaphore = asyncio.Semaphore(parallel)  # 限制并行数量为 parallel
-        await self.io.send(f"并行数量 {parallel}")
+        await self.starter.send(f"并行数量 {parallel}")
         lock = asyncio.Lock()  # 保护共享资源
         tasks = []
         for api in apis:
@@ -86,19 +80,19 @@ class TaskRunner:
     async def __run_api_by_sequential_execution(self, apis: Interfaces, task_result: InterfaceTaskResult, ):
         """顺序执行"""
         for api in apis:
-            flag: bool = await InterFaceRunner(self.starter, self.io).run_interface_by_task(
+            flag: bool = await InterFaceRunner(self.starter).run_interface_by_task(
                 interface=api,
                 taskResult=task_result
             )
             await self.write_process_result(flag, task_result)
-            await self.io.clear_logs()
+            await self.starter.clear_logs()
 
     async def __run_single_api_with_semaphore_and_lock(self, api: Interface, task_result: InterfaceTaskResult,
                                                        semaphore: asyncio.Semaphore, lock: asyncio.Lock):
         """执行单个 API，限制并行数量，并保护共享资源"""
         log.error(f"====={api}")
         async with semaphore:  # 限制并行数量
-            flag: bool = await InterFaceRunner(self.starter, self.io).run_interface_by_task(
+            flag: bool = await InterFaceRunner(self.starter).run_interface_by_task(
                 interface=api,
                 taskResult=task_result
             )
@@ -106,7 +100,7 @@ class TaskRunner:
             # 使用锁保护共享资源的修改
             async with lock:
                 await self.write_process_result(flag, task_result)
-            await self.io.clear_logs()
+            await self.starter.clear_logs()
 
     async def write_process_result(self, flag: bool, task_result: InterfaceTaskResult):
         await self.set_process(task_result)
@@ -119,7 +113,7 @@ class TaskRunner:
     async def __run_Cases(self, cases: InterfaceCases, task_result: InterfaceTaskResult):
         """执行关联case"""
         for case in cases:
-            flag: bool = await InterFaceRunner(self.starter, self.io).run_interfaceCase_by_task(
+            flag: bool = await InterFaceRunner(self.starter).run_interfaceCase_by_task(
                 interfaceCase=case,
                 taskResult=task_result
             )
@@ -130,7 +124,7 @@ class TaskRunner:
             else:
                 task_result.result = InterfaceAPIResultEnum.ERROR
                 task_result.failNumber += 1
-            await self.io.clear_logs()
+            await self.starter.clear_logs()
 
     async def set_process(self, task_result: InterfaceTaskResult):
         """写进度"""

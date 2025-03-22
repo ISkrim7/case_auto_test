@@ -4,9 +4,8 @@ from app.mapper.interface.interfaceGroupMapper import InterfaceGroupMapper
 from app.model.base import User
 from app.response import Response
 from app.schema.interface.interfaceGroupSchema import *
-from interface.io_sender import APISocketSender
+from interface.starter import APIStarter
 from interface.runner import InterFaceRunner
-from interface.starter import Starter
 from utils import MyLoguru, log
 
 LOG = MyLoguru().get_logger()
@@ -36,7 +35,7 @@ async def update_group(group: UpdateInterfaceGroupSchema, cr: User = Depends(Aut
 async def page_group(group: PageInterfaceGroupSchema, _: User = Depends(Authentication())):
     log.debug(group)
     data = await InterfaceGroupMapper.page_by_module(**group.dict(exclude_unset=True,
-                                                              exclude_none=True, ))
+                                                                  exclude_none=True, ))
     return Response.success(data)
 
 
@@ -84,10 +83,8 @@ async def association_apis(info: AssociationAPIS2GroupSchema, cr: User = Depends
 
 @router.get("/try", description="关联api")
 async def try_group(groupId: int, user: User = Depends(Authentication())):
-    logger = APISocketSender(user.uid)
-    _starter = Starter(user)
+    _starter = APIStarter(user)
     resp = await InterFaceRunner(
-        starter=_starter,
-        io=logger
+        starter=_starter
     ).try_group(groupId)
     return Response.success(resp)
