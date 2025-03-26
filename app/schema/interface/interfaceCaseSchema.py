@@ -49,7 +49,8 @@ class ExecuteInterfaceCaseSchema(InterfaceCaseSchema):
 
 
 class PageInterfaceCaseSchema(InterfaceCaseSchema, PageSchema):
-    module_type = ModuleEnum.API_CASE
+    module_type: int = ModuleEnum.API_CASE
+
 
 class AddInterfaceCaseCommonAPISchema(BaseModel):
     caseId: int
