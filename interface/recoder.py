@@ -1,5 +1,4 @@
 import json
-import mimetypes
 from json import JSONDecodeError
 from typing import List, Mapping, Dict, Any
 from mitmproxy import http
