@@ -1,6 +1,6 @@
 from typing import List, Sequence
 
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, and_, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mapper import Mapper
@@ -112,7 +112,7 @@ class InterfaceGroupMapper(Mapper):
                     group: InterfaceGroupModel = await cls.get_by_id(ident=groupId, session=session)
                     last_index = await get_last_index(session=session, groupId=groupId)
                     for index, apiId in enumerate(apiIds, start=last_index + 1):
-                        flag =  await insert_group_api(session=session, groupId=groupId, apiId=apiId, step_order=index)
+                        flag = await insert_group_api(session=session, groupId=groupId, apiId=apiId, step_order=index)
                         if flag:
                             group.api_num += 1
 
@@ -210,7 +210,7 @@ class InterfaceGroupMapper(Mapper):
         """
         try:
 
-            query = await session.scalars(select(InterfaceGroupModel).join(
+            query = await session.scalars(select(InterfaceGroupModel.id).join(
                 group_api_association,
                 group_api_association.c.api_id == InterfaceGroupModel.id
             ).where(
@@ -218,15 +218,23 @@ class InterfaceGroupMapper(Mapper):
             ))
             groups: Sequence[InterfaceGroupModel] = query.all()
             log.debug(groups)
-            if groups:
-                for group in groups:
-                    group.api_num -= 1
-
+            await session.execute(
+                update(InterfaceGroupModel).where(
+                    InterfaceGroupModel.id.in_(groups)
+                ).values(
+                    api_num=InterfaceGroupModel.api_num - 1
+                )
+            )
+            await session.execute(
+                delete(group_api_association).where(
+                    group_api_association.c.api_id == apiId
+                )
+            )
         except Exception as e:
             raise e
 
     @classmethod
-    async def remove_group(cls,groupId:int):
+    async def remove_group(cls, groupId: int):
         """
         删除逻辑
         公共用例解除关联
@@ -237,7 +245,7 @@ class InterfaceGroupMapper(Mapper):
         try:
             async with async_session() as session:
                 async with session.begin():
-                    group = await cls.get_by_id(groupId,session)
+                    group = await cls.get_by_id(groupId, session)
                     # 查询api
                     query = await session.execute(
                         select(InterfaceModel).join(
