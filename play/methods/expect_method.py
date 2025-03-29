@@ -1,13 +1,13 @@
 import re
 
-from playwright.async_api import Page, expect, PageAssertions
+from playwright.async_api import Page, expect
 
 from app.model.ui import UICaseStepsModel, UIResultModel
 from play.extract import ExtractManager
 from play.methods.page_methods import PageMethods
+from play.starter import UIStarter
 from play.writer import Writer
-from utils import GenerateTools, log
-from utils.io_sender import SocketSender
+from utils import GenerateTools
 
 
 class ExpectMethod:
@@ -15,7 +15,7 @@ class ExpectMethod:
     @staticmethod
     async def invoke(page: Page,
                      step: UICaseStepsModel,
-                     io: SocketSender,
+                     starter: UIStarter,
                      em: ExtractManager,
                      case_result: UIResultModel):
         """
@@ -24,7 +24,7 @@ class ExpectMethod:
         "expect.to_have_attribute")
         :param page:
         :param step:
-        :param io:
+        :param starter:
         :param em:
         :param case_result: 存储断言信息
         :return:
@@ -48,7 +48,7 @@ class ExpectMethod:
         if expect_value and isinstance(expect_value, (int, float)):
             expect_value = str(expect_value)
         assertInfo['expect'] = expect_value
-        await io.send(f"断言信息：{assertInfo}")
+        await starter.send(f"断言信息：{assertInfo}")
         try:
             # PageAssertions
             if method == "to_have_title":
@@ -83,5 +83,3 @@ class ExpectMethod:
             else:
                 return ""
         return ""
-
-

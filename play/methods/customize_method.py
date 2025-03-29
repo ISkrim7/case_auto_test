@@ -29,7 +29,6 @@ class CustomizeMethod:
         """
         try:
             await getattr(CustomizeMethod, step.method)(page, step, io, em)
-
         except Exception as e:
             raise e
 
@@ -185,7 +184,8 @@ class CustomizeMethod:
             raise e
 
     @staticmethod
-    async def to_goto(page: Page, step: UICaseStepsModel | str,
+    async def to_goto(page: Page,
+                      step: UICaseStepsModel | str,
                       io: SocketSender,
                       em: ExtractManager):
         """
@@ -211,3 +211,4 @@ class CustomizeMethod:
 
 
 CustomizeMethods = [name for name, member in inspect.getmembers(CustomizeMethod, predicate=inspect.isfunction)]
+print(CustomizeMethods)

@@ -1,17 +1,14 @@
-from playwright.async_api import Page, Keyboard
+from playwright.async_api import  Keyboard
 
 from app.model.ui import UICaseStepsModel
-from play.extract import ExtractManager
-from utils.io_sender import SocketSender
+from play.starter import UIStarter
 
 
 class KeyboardMethods:
 
     @staticmethod
-    async def invoke(page: Page,
-                     step: UICaseStepsModel,
-                     io: SocketSender,
-                     em: ExtractManager,**kwargs):
+    async def invoke(step: UICaseStepsModel,
+                     starter: UIStarter):
         """
         异步调用键盘操作。
 
@@ -29,7 +26,7 @@ class KeyboardMethods:
         """
         # 提取并发送将要使用的键盘方法名
         method = step.method.strip().split(".")[-1]
-        await io.send(f"use keyboard {method}")
+        await starter.send(f"use keyboard {method}")
 
         # 通过反射获取Keyboard类中的指定方法
         attr = await getattr(Keyboard, method)

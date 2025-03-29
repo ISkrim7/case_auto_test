@@ -89,5 +89,5 @@ class PageMethods:
     async def to_scroll(locator: Locator):
         try:
             await locator.scroll_into_view_if_needed()
-        except Exception as e:
+        except Exception:
             pass
