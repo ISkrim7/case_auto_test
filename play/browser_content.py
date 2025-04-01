@@ -7,6 +7,7 @@ from utils import log
 
 
 class BrowserContextSingleton:
+    # 单例模式 弃用
     _instance = None
     _lock = asyncio.Lock()
 
