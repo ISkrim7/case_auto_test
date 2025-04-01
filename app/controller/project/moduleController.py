@@ -13,7 +13,7 @@ router = APIRouter(prefix="/module", tags=["模块"])
 async def insert_module(partInfo: InsertModuleSchema, creator: User = Depends(Authentication(isAdmin=True))):
     await ModuleMapper.save(
         creatorUser=creator,
-        **partInfo.dict()
+        **partInfo.model_dump()
     )
     return Response.success()
 
@@ -22,7 +22,7 @@ async def insert_module(partInfo: InsertModuleSchema, creator: User = Depends(Au
 async def update_module(partInfo: UpdateModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
     await ModuleMapper.update_by_id(
         updateUser=ur,
-        **partInfo.dict()
+        **partInfo.model_dump()
     )
     return Response.success()
 
@@ -35,7 +35,7 @@ async def remove_module(partInfo: RemoveModuleSchema, ur: User = Depends(Authent
 
 @router.post("/drop", description='删除')
 async def drop_module(moduleInfo: DropModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
-    await ModuleMapper.drop(**moduleInfo.dict())
+    await ModuleMapper.drop(**moduleInfo.model_dump())
     return Response.success()
 
 

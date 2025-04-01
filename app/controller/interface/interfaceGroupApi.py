@@ -14,7 +14,7 @@ router = APIRouter(prefix="/interface/group", tags=['自动化接口步骤'])
 
 @router.post("/insert", description="添加组")
 async def insert_group(group: InsertInterfaceGroupSchema, cr: User = Depends(Authentication())):
-    group = await InterfaceGroupMapper.save(creatorUser=cr, **group.dict())
+    group = await InterfaceGroupMapper.save(creatorUser=cr, **group.model_dump())
     return Response.success(group)
 
 
@@ -26,7 +26,7 @@ async def get_group(groupId: int, cr: User = Depends(Authentication())):
 
 @router.post("/update", description="更新组")
 async def update_group(group: UpdateInterfaceGroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.update_by_id(updateUser=cr, **group.dict(exclude_unset=True,
+    await InterfaceGroupMapper.update_by_id(updateUser=cr, **group.model_dump(exclude_unset=True,
                                                                         exclude_none=True, ))
     return Response.success()
 
@@ -34,7 +34,7 @@ async def update_group(group: UpdateInterfaceGroupSchema, cr: User = Depends(Aut
 @router.post("/page", description="组分页")
 async def page_group(group: PageInterfaceGroupSchema, _: User = Depends(Authentication())):
     log.debug(group)
-    data = await InterfaceGroupMapper.page_by_module(**group.dict(exclude_unset=True,
+    data = await InterfaceGroupMapper.page_by_module(**group.model_dump(exclude_unset=True,
                                                                   exclude_none=True, ))
     return Response.success(data)
 
@@ -47,19 +47,19 @@ async def remove_group(group: RemoveInterfaceGroupSchema, cr: User = Depends(Aut
 
 @router.post("/add_association/apis", description="关联apis")
 async def association_apis(info: AssociationAPIS2GroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.association_common_apis(**info.dict())
+    await InterfaceGroupMapper.association_common_apis(**info.model_dump())
     return Response.success()
 
 
 @router.post("/add_association/api", description="关联api")
 async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.association_api(**info.dict())
+    await InterfaceGroupMapper.association_api(**info.model_dump())
     return Response.success()
 
 
 @router.post("/copy_association/api", description="关联api")
 async def copy_association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.copy_association_api(cr=cr, **info.dict())
+    await InterfaceGroupMapper.copy_association_api(cr=cr, **info.model_dump())
     return Response.success()
 
 
@@ -77,7 +77,7 @@ async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(
 
 @router.post("/reorder_association/apis", description="关联api")
 async def association_apis(info: AssociationAPIS2GroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.reorder_apis(**info.dict())
+    await InterfaceGroupMapper.reorder_apis(**info.model_dump())
     return Response.success()
 
 
