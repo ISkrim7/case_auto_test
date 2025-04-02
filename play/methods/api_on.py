@@ -6,7 +6,6 @@ from app.model.ui import UICaseStepsModel
 from play.extract import ExtractManager
 from play.starter import UIStarter
 from utils import MyJsonPath, log
-from utils.io_sender import SocketSender
 
 
 class APIOn:

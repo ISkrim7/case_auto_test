@@ -1,5 +1,6 @@
+from sqlalchemy import Column, String, INTEGER, ForeignKey
+
 from app.model.basic import BaseModel
-from sqlalchemy import Column, String, INTEGER, ForeignKey, JSON, Table, BOOLEAN
 
 
 class EnvModel(BaseModel):

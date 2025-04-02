@@ -1,7 +1,8 @@
 from typing import TypeVar
 
-from sqlalchemy import select, and_, case
-from sqlalchemy.sql.functions import count, func
+from sqlalchemy import select, case
+from sqlalchemy.sql.functions import func
+
 from app.mapper.interface import InterfaceCaseMapper
 from app.mapper.ui.uiCaseMapper import UICaseMapper
 from app.model import async_session, BaseModel

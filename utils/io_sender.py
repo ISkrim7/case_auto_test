@@ -14,7 +14,7 @@ class SocketSender:
     def __init__(self, event: str, user: User | StarterEnum):
         self._event = event
         if isinstance(user, User):
-            self.startBy = StarterEnum.User
+            self.startBy = StarterEnum.User.value
             self.starterName = user.username
             self.uid = user.uid
             self.userId = user.id
