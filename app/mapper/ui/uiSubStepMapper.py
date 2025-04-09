@@ -2,13 +2,10 @@ from typing import List
 
 from sqlalchemy import select, func, update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.coercions import ee_impl
-
 from app.mapper import Mapper
 from app.model import async_session
 from app.model.base import User
 from app.model.ui import SubStepModel
-from utils import log
 
 
 class SubStepMapper(Mapper):

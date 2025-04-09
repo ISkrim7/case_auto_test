@@ -46,3 +46,6 @@ class InterfaceVarsMapper(Mapper):
                     await cls.add_flush_expunge(session, model)
         except Exception as e:
             raise e
+
+
+__all__ = ["InterfaceVarsMapper"]

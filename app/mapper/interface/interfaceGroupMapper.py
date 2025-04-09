@@ -1,23 +1,23 @@
 from typing import List, Sequence
 
-from sqlalchemy import select, and_, delete, update
+from sqlalchemy import select, and_, delete, update, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mapper import Mapper
 from app.model import async_session
 from app.model.base import User
-from app.model.interface import InterfaceGroupModel, group_api_association, InterfaceModel
+from app.model.interface import InterfaceGroupModel, InterfaceModel
+from app.model.interface.association import GroupApiAssociation
 from utils import log
 
 
 async def get_last_index(session: AsyncSession, groupId: int) -> int:
     try:
-        sql = (
-            select(group_api_association.c.step_order).where(
-                group_api_association.c.api_group_id == groupId
-            ).order_by(group_api_association.c.step_order.desc()).limit(1)
-        )
-        result = await session.execute(sql)
+        result = await session.execute((
+            select(GroupApiAssociation.step_order).where(
+                GroupApiAssociation.api_group_id == groupId
+            ).order_by(GroupApiAssociation.step_order.desc()).limit(1)
+        ))
         last_step_order = result.scalar()  # Fetch the first (and only) result
         return last_step_order or 0
     except Exception as e:
@@ -32,17 +32,17 @@ async def insert_group_api(session: AsyncSession, groupId: int, apiId: int, step
     try:
         # 检查是否存在相同的 case_id 和 step_id
         result = await session.execute(
-            select(group_api_association).where(
+            select(GroupApiAssociation).where(
                 and_(
-                    group_api_association.c.api_group_id == groupId,
-                    group_api_association.c.api_id == apiId
+                    GroupApiAssociation.api_group_id == groupId,
+                    GroupApiAssociation.api_id == apiId
                 )
             )
         )
         if result.scalar() is not None:
             return False
         await session.execute(
-            group_api_association.insert().values(
+            insert(GroupApiAssociation).values(
                 api_group_id=groupId,
                 api_id=apiId,
                 step_order=step_order
@@ -132,11 +132,11 @@ class InterfaceGroupMapper(Mapper):
             async with async_session() as session:
                 result = await session.execute(
                     select(InterfaceModel).join(
-                        group_api_association,
-                        group_api_association.c.api_id == InterfaceModel.id
+                        GroupApiAssociation,
+                        GroupApiAssociation.api_id == InterfaceModel.id
                     ).where(
-                        group_api_association.c.api_group_id == groupId
-                    ).order_by(group_api_association.c.step_order)
+                        GroupApiAssociation.api_group_id == groupId
+                    ).order_by(GroupApiAssociation.step_order)
                 )
                 apis = result.scalars().all()
                 return apis
@@ -160,10 +160,10 @@ class InterfaceGroupMapper(Mapper):
                     group.api_num -= 1
                     api: InterfaceModel = await InterfaceMapper.get_by_id(ident=apiId, session=session)
                     await session.execute(
-                        group_api_association.delete().where(
+                        delete(GroupApiAssociation).where(
                             and_(
-                                group_api_association.c.api_group_id == groupId,
-                                group_api_association.c.api_id == apiId
+                                GroupApiAssociation.api_group_id == groupId,
+                                GroupApiAssociation.api_id == apiId
                             )
                         )
                     )
@@ -187,10 +187,10 @@ class InterfaceGroupMapper(Mapper):
                 async with session.begin():
                     for index, apiId in enumerate(apiIds, start=1):
                         await session.execute(
-                            group_api_association.update().where(
+                            update(GroupApiAssociation).where(
                                 and_(
-                                    group_api_association.c.api_group_id == groupId,
-                                    group_api_association.c.api_id == apiId
+                                    GroupApiAssociation.api_group_id == groupId,
+                                    GroupApiAssociation.api_id == apiId
                                 )
                             ).values(
                                 step_order=index
@@ -211,12 +211,12 @@ class InterfaceGroupMapper(Mapper):
         try:
 
             query = await session.scalars(select(InterfaceGroupModel.id).join(
-                group_api_association,
-                group_api_association.c.api_id == InterfaceGroupModel.id
+                GroupApiAssociation,
+                GroupApiAssociation.api_id == InterfaceGroupModel.id
             ).where(
-                group_api_association.c.api_id == apiId
+                GroupApiAssociation.api_id == apiId
             ))
-            groups: Sequence[InterfaceGroupModel] = query.all()
+            groups: Sequence[InterfaceGroupModel.id] = query.all()
             log.debug(groups)
             await session.execute(
                 update(InterfaceGroupModel).where(
@@ -226,8 +226,8 @@ class InterfaceGroupMapper(Mapper):
                 )
             )
             await session.execute(
-                delete(group_api_association).where(
-                    group_api_association.c.api_id == apiId
+                delete(GroupApiAssociation).where(
+                    GroupApiAssociation.api_id == apiId
                 )
             )
         except Exception as e:
@@ -249,17 +249,17 @@ class InterfaceGroupMapper(Mapper):
                     # 查询api
                     query = await session.execute(
                         select(InterfaceModel).join(
-                            group_api_association,
-                            group_api_association.c.api_id == InterfaceModel.id
+                            GroupApiAssociation,
+                            GroupApiAssociation.api_id == InterfaceModel.id
                         ).where(
-                            group_api_association.c.api_group_id == groupId
+                            GroupApiAssociation.api_group_id == groupId
                         )
                     )
                     apis = query.scalars().all()
                     # 删除所有关联
                     await session.execute(
-                        delete(group_api_association).where(
-                            group_api_association.c.api_group_id == groupId
+                        delete(GroupApiAssociation).where(
+                            GroupApiAssociation.api_group_id == groupId
                         )
                     )
                     # 删除所有非公共API
@@ -269,3 +269,6 @@ class InterfaceGroupMapper(Mapper):
                     await session.delete(group)
         except Exception as e:
             raise e
+
+
+__all__ = ['InterfaceGroupMapper']

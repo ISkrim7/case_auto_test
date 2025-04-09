@@ -2,7 +2,6 @@ from sqlalchemy import Column, String, BOOLEAN, ForeignKey, INTEGER, JSON
 from sqlalchemy.orm import relationship
 
 from app.model import BaseModel
-from app.model.ui import case_step_association
 
 
 class SubStepModel(BaseModel):
@@ -47,9 +46,6 @@ class UICaseStepsModel(BaseModel):
     sql = relationship("UIStepSQLModel",
                        cascade="all, delete-orphan",
                        backref="sql", lazy="dynamic")
-    cases = relationship("UICaseModel",
-                         secondary=case_step_association,
-                         back_populates="steps")
     is_group = Column(BOOLEAN, default=False, comment="是否是组")
     group_Id = Column(INTEGER,
                       nullable=True, comment="所属组id")

@@ -12,3 +12,10 @@ class InterfaceGlobalHeaderMapper(Mapper):
 
 class InterfaceGlobalFuncMapper(Mapper):
     __model__ = InterfaceGlobalFunc
+
+
+__all__ = [
+    "InterfaceGlobalVariableMapper",
+    "InterfaceGlobalHeaderMapper",
+    "InterfaceGlobalFuncMapper"
+]
