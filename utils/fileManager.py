@@ -9,7 +9,8 @@ from config import Config
 from utils import GenerateTools, log
 from file import current_dir as file_path
 
-
+AVATAR = os.path.join(file_path, "avatar")
+API_DATA = os.path.join(file_path, "api_data")
 def verify_dir(_path: str):
     if not os.path.exists(_path):
         os.makedirs(_path)
@@ -17,7 +18,21 @@ def verify_dir(_path: str):
 
 class FileManager:
     # 头像
-    AVATAR = os.path.join(file_path, "avatar")
+
+
+    @staticmethod
+    async def save_data_file(file: UploadFile, interfaceId: str):
+        """
+        接口请求form 附件保存
+        """
+        verify_dir(API_DATA)
+        fileName = f"{interfaceId}_{file.filename}"
+        filePath = os.path.join(API_DATA, fileName)
+        with open(filePath, "wb") as buffer:
+            buffer.write(await file.read())
+
+        return fileName
+
 
     @staticmethod
     async def save_avatar(file: UploadFile, user: User):
@@ -30,14 +45,14 @@ class FileManager:
         删除file table
         重新存
         """
-        verify_dir(FileManager.AVATAR)
+        verify_dir(AVATAR)
         if user.avatar:
             log.debug(user.avatar)
             await FileMapper.remove_file(user.avatar.split("uid=")[-1])
 
         fileName = GenerateTools.uid()
         fileType = file.content_type
-        filePath = os.path.join(FileManager.AVATAR, fileName)
+        filePath = os.path.join(AVATAR, fileName)
         with open(filePath, "wb") as buffer:
             buffer.write(await file.read())
 
@@ -64,4 +79,3 @@ class FileManager:
     def reader(path: str):
         with open(path, "rb") as f:
             return f.read()
-
