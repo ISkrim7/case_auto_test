@@ -3,7 +3,8 @@ import re
 from enums import InterfaceExtractTargetVariablesEnum
 from httpx import Response
 
-from utils import MyJsonPath, log
+from enums.CaseEnum import ExtraEnum
+from utils import JsonExtract, log
 
 
 class ExecResponseExtract:
@@ -31,7 +32,7 @@ class ExecResponseExtract:
         for extract in extracts:
             try:
                 target = int(extract.get("target", 0))
-                handler:Callable = handlers.get(target)
+                handler: Callable = handlers.get(target)
                 if handler:
                     extract['value'] = await handler(extract)
                 else:
@@ -45,9 +46,14 @@ class ExecResponseExtract:
 
     async def _handle_response_json_extract(self, extract: Dict[str, Any]) -> Any:
         """处理 ResponseJsonExtract 类型"""
+        opt = extract.get("extraOpt", ExtraEnum.JSONPATH)
         try:
-            jp = MyJsonPath(jsonBody=self.response, expr=extract['value'])
-            return await jp.value()
+            jp = JsonExtract(jsonBody=self.response, expr=extract['value'])
+            match opt:
+                case ExtraEnum.JMESPATH:
+                    return await jp.search()
+                case ExtraEnum.JSONPATH:
+                    return await jp.value()
         except Exception as e:
             log.error(f"Failed to extract JSON value: {e}")
             return None
@@ -55,13 +61,13 @@ class ExecResponseExtract:
     async def _handle_response_header_extract(self, extract: Dict[str, Any]) -> Any:
         """处理 ResponseHeaderExtract 类型"""
         try:
-            jp = MyJsonPath(jsonBody=dict(self.response.headers), expr=extract['value'])
+            jp = JsonExtract(jsonBody=dict(self.response.headers), expr=extract['value'])
             return await jp.value()
         except Exception as e:
             log.error(f"Failed to extract header value: {e}")
             return None
 
-    async def _handle_request_cookie_extract(self, extract: Dict[str, Any]) -> Any:
+    async def _handle_request_cookie_extract(self, _: Any) -> Any:
         """处理 RequestCookieExtract 类型"""
         return self.response.request.headers.get("cookie", None)
 

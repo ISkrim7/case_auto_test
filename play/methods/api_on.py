@@ -5,7 +5,7 @@ from playwright.async_api import Page
 from app.model.ui import UICaseStepsModel
 from play.extract import ExtractManager
 from play.starter import UIStarter
-from utils import MyJsonPath, log
+from utils import JsonExtract, log
 
 
 class APIOn:
@@ -36,7 +36,7 @@ class APIOn:
                 await starter.send(f"url =  {response.url}")
                 try:
                     _body = await response.json()
-                    jp = MyJsonPath(_body, jpStr)
+                    jp = JsonExtract(_body, jpStr)
                     value = await jp.value()
                     await starter.send(f"获取变量 >> ✅ {variableName} = {value}")
                     await em.add_var(variableName, value)
