@@ -1,1 +1,1 @@
-#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/4/17# @Author : cyq# @File : todo# @Software: PyCharm# @Desc:# api todo# yarm 导入导出# excel 到入导出# 支持 har 导入# 测试用例能力from faker import Fakerf = Faker(locale="zh_CN")print(f.ssn())
+#!/usr/bin/env python# -*- coding:utf-8 -*-# @Time : 2025/4/17# @Author : cyq# @File : todo# @Software: PyCharm# @Desc:# api todo# yarm 导入导出# excel 到入导出# 支持 har 导入# 测试用例能力
