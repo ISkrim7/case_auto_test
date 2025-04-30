@@ -7,7 +7,8 @@ from app.mapper.file import FileMapper
 from app.model.base import User
 from config import Config
 from utils import GenerateTools, log
-from file import current_dir as file_path
+import magic
+file_path = os.path.dirname(os.path.abspath(__file__))
 
 AVATAR = os.path.join(file_path, "avatar")
 API_DATA = os.path.join(file_path, "api_data")
