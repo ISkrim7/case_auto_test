@@ -224,3 +224,10 @@
 - 2025-03-07
   - 优化前端代码、接口修改操作优化
   - 添加DB链接测试接口
+
+- 2025-05-16
+  - 断言重构
+  - 支持jmespath
+  - 支持变量断言
+  - ui 重构
+  - ![api_assert.png](resource/api_assert.png)
