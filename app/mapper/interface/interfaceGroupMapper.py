@@ -87,14 +87,25 @@ class InterfaceGroupMapper(Mapper):
         try:
             async with async_session() as session:
                 async with session.begin():
+                    # 添加组对象获取
+                    group: InterfaceGroupModel = await cls.get_by_id(ident=groupId, session=session)
                     from app.mapper.interface import InterfaceMapper
                     # 复制api 转为私有
                     api = await InterfaceMapper.copy_api(apiId=apiId, creator=cr, is_copy_name=True,
                                                          is_common=False,
                                                          session=session)
                     last_index = await get_last_index(session=session, groupId=groupId)
-                    await insert_group_api(session=session, groupId=groupId, apiId=api.id, step_order=last_index + 1)
-
+                    #await insert_group_api(session=session, groupId=groupId, apiId=api.id, step_order=last_index + 1)
+                    # 获取插入结果
+                    is_success = await insert_group_api(
+                        session=session,
+                        groupId=groupId,
+                        apiId=api.id,
+                        step_order=last_index + 1
+                    )
+                    # 如果插入成功则自增计数
+                    if is_success:
+                        group.api_num += 1
         except Exception as e:
             raise e
 
@@ -212,7 +223,8 @@ class InterfaceGroupMapper(Mapper):
 
             query = await session.scalars(select(InterfaceGroupModel.id).join(
                 GroupApiAssociation,
-                GroupApiAssociation.api_id == InterfaceGroupModel.id
+                #GroupApiAssociation.api_id == InterfaceGroupModel.id
+                GroupApiAssociation.api_group_id == InterfaceGroupModel.id  # 正确定义外键关系
             ).where(
                 GroupApiAssociation.api_id == apiId
             ))
