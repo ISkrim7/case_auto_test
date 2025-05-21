@@ -51,7 +51,7 @@ class ExecResponseExtract:
             jp = JsonExtract(jsonBody=self.response, expr=extract['value'])
             match opt:
                 case ExtraEnum.JMESPATH:
-                    return await jp.search()
+                    return  jp.search()
                 case ExtraEnum.JSONPATH:
                     return await jp.value()
         except Exception as e:
