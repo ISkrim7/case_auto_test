@@ -1,6 +1,7 @@
+import csv
 import json
 import os
-from typing import AnyStr, NoReturn
+from typing import AnyStr, NoReturn, List, Dict
 from fastapi import UploadFile
 
 from app.mapper.file import FileMapper
@@ -11,6 +12,8 @@ from file import current_dir as file_path
 
 AVATAR = os.path.join(file_path, "avatar")
 API_DATA = os.path.join(file_path, "api_data")
+
+
 def verify_dir(_path: str):
     if not os.path.exists(_path):
         os.makedirs(_path)
@@ -18,7 +21,6 @@ def verify_dir(_path: str):
 
 class FileManager:
     # 头像
-
 
     @staticmethod
     async def save_data_file(file: UploadFile, interfaceId: str):
@@ -32,7 +34,6 @@ class FileManager:
             buffer.write(await file.read())
 
         return fileName
-
 
     @staticmethod
     async def save_avatar(file: UploadFile, user: User):
@@ -79,3 +80,40 @@ class FileManager:
     def reader(path: str):
         with open(path, "rb") as f:
             return f.read()
+
+    @staticmethod
+    def file_reader_for_perf(path: str) -> List[Dict[str, str]]:
+        """
+        读取CSV格式的文本文件并转换为字典列表
+
+        示例输入文件内容：
+        username,password
+        admin,123
+        hah,222
+
+        返回：
+        [{'username': 'admin', 'password': '123'}, {'username': 'hah', 'password': '222'}]
+
+        Args:
+            path: 文件路径
+
+        Returns:
+            包含字典的列表，每个字典代表一行数据
+        """
+        data = []
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                # 使用csv模块更安全地处理CSV文件
+                reader = csv.DictReader(f)
+                data = [row for row in reader]
+
+        except FileNotFoundError:
+            raise FileNotFoundError(f"文件 {path} 不存在")
+        except Exception as e:
+            raise Exception(f"读取文件时出错: {str(e)}")
+
+        return data
+if __name__ == '__main__':
+    a = FileManager.file_reader_for_perf("data.txt")
+    print(a)
