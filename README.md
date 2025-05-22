@@ -231,3 +231,9 @@
   - 支持变量断言
   - ui 重构
   - ![api_assert.png](resource/api_assert.png)
+
+
+- 2025-05-22
+ - 集成locust 压测 （半成品）
+ - 待完成 数据记录、断言、变量等
+ - ![api_perf.png](resource/api_perf.png)
