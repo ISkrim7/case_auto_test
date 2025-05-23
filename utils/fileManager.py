@@ -1,7 +1,7 @@
 import csv
 import json
 import os
-from typing import AnyStr, NoReturn, List, Dict
+from typing import AnyStr, NoReturn, List, Dict, Any
 from fastapi import UploadFile
 
 from app.mapper.file import FileMapper
@@ -9,6 +9,7 @@ from app.model.base import User
 from config import Config
 from utils import GenerateTools, log
 from file import current_dir as file_path
+from queue import Queue
 
 AVATAR = os.path.join(file_path, "avatar")
 API_DATA = os.path.join(file_path, "api_data")
@@ -82,7 +83,7 @@ class FileManager:
             return f.read()
 
     @staticmethod
-    def file_reader_for_perf(path: str) -> List[Dict[str, str]]:
+    def file_reader_for_perf(path: str, q: bool = False) -> Queue[Dict[str, Any]] | List[Dict[str, str]]:
         """
         读取CSV格式的文本文件并转换为字典列表
 
@@ -96,6 +97,7 @@ class FileManager:
 
         Args:
             path: 文件路径
+            q:是否返回queue
 
         Returns:
             包含字典的列表，每个字典代表一行数据
@@ -106,7 +108,12 @@ class FileManager:
             with open(path, "r", encoding="utf-8") as f:
                 # 使用csv模块更安全地处理CSV文件
                 reader = csv.DictReader(f)
-                data = [row for row in reader]
+                if q:
+                    data = Queue()
+                    for row in reader:
+                        data.put(row)
+                else:
+                    data = [row for row in reader]
 
         except FileNotFoundError:
             raise FileNotFoundError(f"文件 {path} 不存在")
@@ -114,6 +121,8 @@ class FileManager:
             raise Exception(f"读取文件时出错: {str(e)}")
 
         return data
+
+
 if __name__ == '__main__':
     a = FileManager.file_reader_for_perf("data.txt")
     print(a)
