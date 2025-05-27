@@ -62,6 +62,14 @@ async def copy_association_apis(info: AssociationAPI2GroupSchema, cr: User = Dep
     await InterfaceGroupMapper.copy_association_api(cr=cr, **info.model_dump())
     return Response.success()
 
+@router.post("/copy", description="复制组")
+async def copy_group(
+        info: CopyInterfaceGroupSchema,  # 使用正确的Schema
+        cr: User = Depends(Authentication())
+):
+    await InterfaceGroupMapper.copy_group(**info.model_dump(), creator=cr)
+    return Response.success()
+
 
 @router.get("/query_association/apis", description="关联api")
 async def association_apis(groupId: int, cr: User = Depends(Authentication())):

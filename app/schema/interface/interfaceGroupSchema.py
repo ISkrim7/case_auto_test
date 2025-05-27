@@ -50,3 +50,8 @@ class AssociationAPI2GroupSchema(BaseModel):
 
 class InterfaceGroupDetailSchema(BaseModel):
     groupId: int
+
+class CopyInterfaceGroupSchema(BaseModel):
+    groupId: int = Field(..., description="被复制的组ID")
+    # 可选：如果要允许自定义新组名称
+    # newName: str | None = None

@@ -76,6 +76,46 @@ class InterfaceGroupMapper(Mapper):
             raise e
 
     @classmethod
+    async def copy_group(cls, groupId: int, creator: User):
+        async with async_session() as session:
+            async with session.begin():
+                # 1. 获取原组信息
+                original_group: InterfaceGroupModel = await cls.get_by_id(groupId, session)
+
+                # 2. 创建新组（自动生成名称，如 "原组名_副本"）
+                new_group = InterfaceGroupModel(
+                    name=f"{original_group.name}_副本",
+                    description=original_group.description,
+                    project_id=original_group.project_id,
+                    module_id=original_group.module_id,
+                    creator=creator.id,
+                    creatorName=creator.username
+                )
+                session.add(new_group)
+                await session.flush()  # 确保生成new_group.id
+
+                # 3. 复制关联的API（示例逻辑）
+                original_apis = await session.execute(
+                    select(GroupApiAssociation)
+                    .where(GroupApiAssociation.api_group_id == groupId)
+                    .order_by(GroupApiAssociation.step_order)
+                )
+                original_apis = original_apis.scalars().all()
+
+                # 将原组的API关联到新组，保持顺序
+                for index, assoc in enumerate(original_apis, start=1):
+                    await session.execute(
+                        insert(GroupApiAssociation).values(
+                            api_group_id=new_group.id,
+                            api_id=assoc.api_id,
+                            step_order=index
+                        )
+                    )
+
+                # 4. 更新新组的api_num
+                new_group.api_num = len(original_apis)
+
+    @classmethod
     async def copy_association_api(cls, groupId: int, apiId: int, cr: User):
         """
         复制api
@@ -277,7 +317,15 @@ class InterfaceGroupMapper(Mapper):
                     # 删除所有非公共API
                     private_apis = [api for api in apis if not api.is_common]
                     for api in private_apis:
-                        await session.delete(api)
+                        #await session.delete(api)
+                        # 检查该API是否被其他组使用
+                        stmt = select(GroupApiAssociation).where(
+                            GroupApiAssociation.api_id == api.id
+                        )
+                        result = await session.execute(stmt)
+                        associations = result.scalars().all()
+                        if not associations:  # 无其他引用才删除
+                            await session.delete(api)
                     await session.delete(group)
         except Exception as e:
             raise e
