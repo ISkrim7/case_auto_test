@@ -19,7 +19,7 @@ class FakerClient:
                 value = getattr(self, script)()
                 return value
             except AttributeError as e:
-                return ""
+                return script
 
     def _get_faker_value(self, script: str):
         try:
@@ -58,8 +58,3 @@ class FakerClient:
         # 构造当月1号日期
         first_day_of_month = current_date.replace(day=1)
         return first_day_of_month.strftime("%Y-%m-%d")
-
-
-if __name__ == '__main__':
-    f = FakerClient()
-    f.value("monthFddasirst")

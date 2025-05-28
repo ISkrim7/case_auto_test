@@ -16,6 +16,6 @@ pgrep -f $CONFIG_FILE | xargs kill -9
 
 # 启动 Gunicorn
 echo "Starting Gunicorn..."
-gunicorn -c $CONFIG_FILE main:app
+gunicorn -c $CONFIG_FILE main:hub
 
 echo "Gunicorn has been restarted."
