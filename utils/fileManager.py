@@ -6,6 +6,7 @@ from fastapi import UploadFile
 
 from app.mapper.file import FileMapper
 from app.model.base import User
+from common.locust_client.perf_file import PerfPath
 from config import Config
 from utils import GenerateTools, log
 from file import current_dir as file_path
@@ -34,6 +35,17 @@ class FileManager:
         with open(filePath, "wb") as buffer:
             buffer.write(await file.read())
 
+        return fileName
+
+    @staticmethod
+    async def save_perf_file(file: UploadFile, interfaceId: str):
+        """
+        接口性能参数文件
+        """
+        fileName = f"{interfaceId}_{file.filename}"
+        filePath = os.path.join(PerfPath, fileName)
+        with open(filePath, "wb") as buffer:
+            buffer.write(await file.read())
         return fileName
 
     @staticmethod
@@ -83,7 +95,7 @@ class FileManager:
             return f.read()
 
     @staticmethod
-    def file_reader_for_perf(path: str, q: bool = False) -> Queue[Dict[str, Any]] | List[Dict[str, str]]:
+    def file_reader_for_perf(fileName: str, q: bool = False) -> Queue[Dict[str, Any]] | List[Dict[str, str]]:
         """
         读取CSV格式的文本文件并转换为字典列表
 
@@ -96,7 +108,7 @@ class FileManager:
         [{'username': 'admin', 'password': '123'}, {'username': 'hah', 'password': '222'}]
 
         Args:
-            path: 文件路径
+            fileName: 文件路径
             q:是否返回queue
 
         Returns:
@@ -105,7 +117,8 @@ class FileManager:
         data = []
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            filePath = os.path.join(PerfPath, fileName)
+            with open(filePath, "r", encoding="utf-8") as f:
                 # 使用csv模块更安全地处理CSV文件
                 reader = csv.DictReader(f)
                 if q:
@@ -116,7 +129,7 @@ class FileManager:
                     data = [row for row in reader]
 
         except FileNotFoundError:
-            raise FileNotFoundError(f"文件 {path} 不存在")
+            raise FileNotFoundError(f"文件 {fileName} 不存在")
         except Exception as e:
             raise Exception(f"读取文件时出错: {str(e)}")
 
