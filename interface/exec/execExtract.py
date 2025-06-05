@@ -69,7 +69,7 @@ class ExecResponseExtract:
             jp = JsonExtract(jsonBody=self.response, expr=extract['value'])
             match opt:
                 case ExtraEnum.JMESPATH:
-                    return await jp.search()
+                    return  jp.search()
                 case ExtraEnum.JSONPATH:
                     # 检查是否包含索引语法 [数字]
                     index_match = re.search(r'\[(\d+)\]$', extract['value'])
