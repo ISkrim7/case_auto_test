@@ -51,7 +51,7 @@ class ExecResponseExtract:
             jp = JsonExtract(jsonBody=self.response, expr=extract['value'])
             match opt:
                 case ExtraEnum.JMESPATH:
-                    return  jp.search()
+                    return jp.search()
                 case ExtraEnum.JSONPATH:
                     return await jp.value()
         except Exception as e:
@@ -67,8 +67,8 @@ class ExecResponseExtract:
             log.error(f"Failed to extract header value: {e}")
             return None
 
-    async def _handle_request_cookie_extract(self, _: Any) -> Any:
-        """处理 RequestCookieExtract 类型"""
+    async def _handle_request_cookie_extract(self, extract: Dict[str, Any]) -> Any:
+        """处理 RequestCookieExtract 类型 """
         log.info(f"RequestCookieExtract ${self.response.request.headers}")
         log.info(f"RequestCookieExtract ${self.response.cookies}")
         return self.response.request.headers.get("cookie", None)

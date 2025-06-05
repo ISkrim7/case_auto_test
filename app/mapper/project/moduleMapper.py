@@ -16,20 +16,20 @@ async def list2Tree(datas: List[Module]):
     :return:
     """
     data = [data.map for data in datas]
-    mapping: dict = dict(zip([i['key'] for i in data], data))
-    log.debug(mapping)
+    mapping ={item['key']: item for item in data}
     tree = []
-    for d in data:
-        parent: dict = mapping.get(d['parent_id'])
+    for item in data:
+        parent_key = item.get('parent_id')
+        parent = mapping.get(parent_key) if parent_key else None
+
         if parent is None:
-            tree.append(d)
+            tree.append(item)
         else:
-            children: list = parent.get("children")
-            if not children:
-                children = []
-            children.append(d)
-            parent.update({"children": children,"children_length":len(children)})
+            children = parent.setdefault("children", [])
+            children.append(item)
+            parent["children_length"] = len(children)
     return tree
+
 
 
 
