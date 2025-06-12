@@ -21,8 +21,6 @@ class ExecResponseExtract:
         :param extracts:
         :return:
         """
-
-        log.debug(f"extracts:{extracts}")
         handlers = {
             InterfaceExtractTargetVariablesEnum.ResponseJsonExtract: self._handle_response_json_extract,
             InterfaceExtractTargetVariablesEnum.ResponseHeaderExtract: self._handle_response_header_extract,
@@ -69,8 +67,7 @@ class ExecResponseExtract:
 
     async def _handle_request_cookie_extract(self, extract: Dict[str, Any]) -> Any:
         """处理 RequestCookieExtract 类型 """
-        log.info(f"RequestCookieExtract ${self.response.request.headers}")
-        log.info(f"RequestCookieExtract ${self.response.cookies}")
+
         return self.response.request.headers.get("cookie", None)
 
     async def _handle_response_text_extract(self, extract: Dict[str, Any]) -> Any:
