@@ -30,9 +30,9 @@ APScheduler==3.10.4
 asgiref==3.8.1
 async-timeout==5.0.1
 attrs==24.3.0
-autogen-agentchat==0.4.9.2
-autogen-core==0.4.9.2
-autogen-ext==0.4.9.2
+autogen-agentchat==0.6.1
+autogen-core==0.6.1
+autogen-ext==0.6.1
 awaits==0.0.11
 beautifulsoup4==4.12.3
 bidict==0.23.1
@@ -62,7 +62,7 @@ dnspython==2.6.1
 email_validator==2.1.1
 facebook-wda==1.4.9
 Faker==26.3.0
-fastapi==0.108.0
+fastapi==0.111.0
 fastapi-cli==0.0.4
 fastapi-socketio==0.0.10
 filelock==3.17.0
@@ -114,7 +114,6 @@ munch==4.0.0
 mysql-connector-python==8.0.26
 nacos-sdk-python==2.0.1
 networkx==3.4.2
-numpy==2.2.3
 openai==1.68.2
 opentelemetry-api==1.31.1
 orjson==3.10.3
@@ -134,7 +133,7 @@ pyasn1_modules==0.4.1
 pycparser==2.22
 pycryptodome==3.21.0
 pydantic==2.10.6
-pydantic_core==2.27.2
+pydantic-core==2.27.2
 pyee==13.0.0
 pyelftools==0.31
 Pygments==2.18.0
@@ -172,14 +171,13 @@ sniffio==1.3.1
 sortedcontainers==2.4.0
 soupsieve==2.5
 SQLAlchemy==2.0.31
-starlette==0.32.0.post1
+starlette==0.37.2
 sympy==1.13.1
 tiktoken==0.9.0
-torch==2.6.0
-tornado==6.4.2
+tornado==6.5
 tqdm==4.67.1
 typer==0.12.3
-typing_extensions==4.12.2
+typing_extensions==4.14.0
 tzdata==2025.1
 tzlocal==5.2
 uiautomator2==3.2.6
@@ -203,3 +201,4 @@ zipp==3.21.0
 zope.event==5.0
 zope.interface==7.2
 zstandard==0.23.0
+python-magic==0.4.27

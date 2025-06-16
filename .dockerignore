@@ -1,11 +1,44 @@
-__pycache__/
+# 开发文件
+.git/
+.gitignore
+.idea/
+.vscode/
 *.pyc
+__pycache__/
 *.pyo
 *.pyd
 .Python
 env/
 venv/
-*.egg-info/
-.DS_Store
-.git/
-.gitignore
+
+# 测试文件
+tests/
+test/
+examples/
+docs/
+
+# 日志和临时文件
+*.log
+*.tmp
+*.bak
+
+# 本地配置文件
+local_settings.py
+.env
+.env.local
+
+# 大文件
+*.zip
+*.tar
+*.gz
+*.mp4
+*.mov
+*.avi
+*.jpg
+*.png
+*.gif
+
+# 资源文件和日志
+resource/
+logs/
+play/play_error_shot/
