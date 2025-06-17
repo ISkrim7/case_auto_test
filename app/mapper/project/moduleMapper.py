@@ -75,10 +75,17 @@ class ModuleMapper(Mapper):
         :return:
         """
         try:
-            query_modules: List[Module] = await cls.query_by(project_id=project_id, module_type=module_type)
-            if not query_modules:
-                return []
-            else:
+            query = select(Module).where(
+                and_(
+                    Module.project_id == project_id,
+                    Module.module_type == module_type
+                )
+            ).order_by(Module.order)
+
+            async with async_session() as session:
+                query_modules = (await session.execute(query)).scalars().all()
+                if not query_modules:
+                    return []
                 return await list2Tree(query_modules)
         except Exception as e:
             log.error(e)
@@ -92,7 +99,7 @@ class ModuleMapper(Mapper):
                 async with session.begin():
                     module:Module = await cls.get_by_id(moduleId, session)
                     if module.parent_id is None:
-                        subId = await get_subtree_ids(session, moduleId)
+                        subId = await get_subtree_ids(session, moduleId, module.module_type)
                         if subId:
                             for i in subId:
                                 await session.execute(delete(Module).where(Module.id == i))
@@ -102,16 +109,45 @@ class ModuleMapper(Mapper):
 
 
     @classmethod
-    async def drop(cls, id: int, targetId: int | None):
+    async def drop(cls, id: int, targetId: int | None, new_order: int = None):
         try:
             async with async_session() as session:
-                module: Module = await cls.get_by_id(id, session)
-                if targetId:
-                    target_module: Module = await cls.get_by_id(targetId, session)
-                    module.parent_id = target_module.id
-                else:
-                    module.parent_id = None
-                session.add(module)
-                await session.commit()
+                async with session.begin():
+                    module: Module = await cls.get_by_id(id, session)
+
+                    # 获取当前模块的同级模块
+                    siblings_query = select(Module).where(
+                        and_(
+                            Module.parent_id == (module.parent_id if targetId is None else targetId),
+                            Module.id != module.id,
+                            Module.module_type == module.module_type
+                        )
+                    ).order_by(Module.order)
+
+                    siblings = (await session.execute(siblings_query)).scalars().all()
+
+                    # 设置新的parent_id
+                    if targetId:
+                        target_module: Module = await cls.get_by_id(targetId, session)
+                        module.parent_id = target_module.id
+                    else:
+                        module.parent_id = None
+
+                    # 处理排序
+                    if new_order is not None:
+                        module.order = new_order
+                        # 更新其他同级模块的order
+                        for idx, sibling in enumerate(siblings):
+                            if idx >= new_order:
+                                sibling.order = idx + 1
+                            else:
+                                sibling.order = idx
+                    else:
+                        # 如果没有指定新顺序，则放到最后
+                        module.order = len(siblings)
+
+                    session.add(module)
+                    for sibling in siblings:
+                        session.add(sibling)
         except Exception as e:
             raise e

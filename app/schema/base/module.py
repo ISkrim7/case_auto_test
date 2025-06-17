@@ -28,3 +28,4 @@ class RemoveModuleSchema(BaseModel):
 class DropModuleSchema(BaseModel):
     id: int
     targetId: int | None = None
+    new_order: int | None = None
