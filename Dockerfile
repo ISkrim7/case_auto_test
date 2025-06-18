@@ -7,14 +7,17 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
 COPY requirements.txt .
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc python3-dev libmagic-dev && \
-    pip install --upgrade pip && \
+    #pip install --upgrade pip && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --user --no-warn-script-location --no-deps -r requirements.txt && \
+    pip cache purge && \
     #pip install --user --no-warn-script-location pydantic-core && \
     #pip install pydantic-core==2.16.3 && \
-    pip install --user --no-warn-script-location --no-deps -r requirements.txt && \
+    #pip install --user --no-warn-script-location --no-deps -r requirements.txt && \
     #pip install --user --no-warn-script-location -r requirements.txt && \
     apt-get remove -y gcc python3-dev libmagic-dev && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* /root/.cache/pip  # 新增缓存清理
+    rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache  # 新增缓存清理
 
 # 第二阶段：运行时环境（关键修复）
 FROM python:3.12-slim-bullseye

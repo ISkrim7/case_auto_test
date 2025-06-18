@@ -42,3 +42,4 @@ local_settings.py
 resource/
 logs/
 play/play_error_shot/
+screenshots/
