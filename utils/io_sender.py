@@ -10,6 +10,7 @@ class SocketSender:
     _event: str
     uid: str = None
     userId: int = None
+    _ns: str = "/"
 
     def __init__(self, event: str, user: User | StarterEnum):
         self._event = event
@@ -64,7 +65,9 @@ class SocketSender:
         try:
 
             # 使用异步I/O发送消息。
-            await async_io.emit(event=self._event, data=data, uid=self.uid)
+            await async_io.emit(event=self._event, data=data,
+                                namespace=self._ns,
+                                uid=self.uid)
         except Exception as e:
             # 记录发送过程中出现的错误。
             log.error(e)
