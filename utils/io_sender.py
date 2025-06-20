@@ -1,3 +1,5 @@
+from typing import List, Union
+
 from app.model.base import User
 from enums import StarterEnum
 from utils import GenerateTools, MyLoguru
@@ -10,12 +12,15 @@ class SocketSender:
     _event: str
     uid: str = None
     userId: int = None
-    _ns: str = "/"
+    _ns: str = None
+    _perf_ns = "/api_perf_ns"
 
-    def __init__(self, event: str, user: User | StarterEnum):
+    def __init__(self, ns: str, event: str, user: Union[User, StarterEnum]):
         self._event = event
+        self._ns = ns
+        self.logs = []
         if isinstance(user, User):
-            self.startBy = StarterEnum.User.value
+            self.startBy = StarterEnum.User
             self.starterName = user.username
             self.uid = user.uid
             self.userId = user.id
@@ -37,10 +42,19 @@ class SocketSender:
         无返回值。
         """
         try:
+            # 记录格式化后的消息。
+            log.info(msg)
+            # 将消息添加到日志列表中。
+            self.logs.append(msg + "\n")
+
             # 准备发送的数据。
             data = {"code": 0, 'data': msg}
             # 使用异步I/O发送消息。
-            await async_io.emit(event=self._event, data=data, uid=self.uid)
+            await async_io.emit(event=self._event,
+                                data=data,
+                                uid=self.uid,
+                                namespace=self._ns)
+
         except Exception as e:
             # 记录发送过程中出现的错误。
             log.error(e)
@@ -48,39 +62,38 @@ class SocketSender:
     async def over(self, reportId: int | str = None):
         try:
             data = {"code": 1, 'data': dict(rId=reportId)}
-            await async_io.emit(event=self._event, data=data, uid=self.uid)
+            await async_io.emit(event=self._event, data=data, uid=self.uid,
+                                namespace=self._ns)
         except Exception as e:
             log.error(e)
 
     async def push(self, data: dict):
         """
+        性能测试用
         异步发送data
 
         参数:
         - msg (dict): 需要发送的消息内容。
-
         返回:
         无返回值。
         """
         try:
 
             # 使用异步I/O发送消息。
-            await async_io.emit(event=self._event, data=data,
-                                namespace=self._ns,
-                                uid=self.uid)
+            # 使用异步I/O发送消息。
+            await async_io.emit(event=self._event,
+                                data=data,
+                                uid=self.uid,
+                                namespace=self._perf_ns)
         except Exception as e:
             # 记录发送过程中出现的错误。
             log.error(e)
-
-    @staticmethod
-    async def set_msg(msg) -> str:
-        # 格式化消息，添加时间戳。
-        msg = f"{GenerateTools.getTime(1)} 🚀 🚀  {msg}"
-        log.info(msg)
-        return msg
 
     @property
     def username(self):
         if self.startBy == StarterEnum.User:
             return self.starterName
         return StarterEnum(self.startBy).name
+
+    async def clear_logs(self):
+        self.logs = []
