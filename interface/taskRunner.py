@@ -90,7 +90,6 @@ class TaskRunner:
     async def __run_single_api_with_semaphore_and_lock(self, api: Interface, task_result: InterfaceTaskResult,
                                                        semaphore: asyncio.Semaphore, lock: asyncio.Lock):
         """执行单个 API，限制并行数量，并保护共享资源"""
-        log.error(f"====={api}")
         async with semaphore:  # 限制并行数量
             flag: bool = await InterFaceRunner(self.starter).run_interface_by_task(
                 interface=api,
