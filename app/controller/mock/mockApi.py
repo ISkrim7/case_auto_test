@@ -29,7 +29,7 @@ class CreateMockSchema(BaseSchema):
     path: str = Field(..., min_length=1, max_length=500, description="接口路径")
     mockname: Optional[str] = Field(None, max_length=100, description="Mock接口名称")
     method: str = Field("GET", description="请求方法", pattern="^(GET|POST|PUT|DELETE|PATCH)$")
-    status_code: int = Field(200, description="响应状态码", ge=200, le=599, alias="statusCode")
+    status_code: int = Field(200, description="响应状态码", ge=200, le=599)
     response: Optional[Union[dict, str]] = Field(None, description="响应内容")
     delay: Optional[float] = Field(None, description="延迟响应(毫秒)", ge=0, le=10000)
     description: Optional[str] = Field(None, max_length=200, description="规则描述")
@@ -38,6 +38,12 @@ class CreateMockSchema(BaseSchema):
     content_type: Optional[str] = Field(None, description="响应内容类型")
     script: Optional[str] = Field(None, description="前置/后置脚本")
     interface_id: Optional[int] = Field(None, description="关联接口ID")
+    params: Optional[dict] = Field(None, description="请求参数")
+    request_headers: Optional[dict] = Field(None, description="请求头")
+    body_type: int = Field(0, description="0无 1raw 2data 3..")
+    raw_type: Optional[str] = Field(None, description="raw 类型 json text")
+    body: Optional[dict] = Field(None, description="请求体")
+    data: Optional[dict] = Field(None, description="表单")
 
     @validator('response')
     def parse_response(cls, v):
@@ -116,6 +122,12 @@ async def create_mock_rule(
                     content_type=rule.content_type,
                     script=rule.script,
                     interface_id=rule.interface_id,
+                    params=rule.params,
+                    request_headers=rule.request_headers,
+                    body_type=rule.body_type,
+                    raw_type=rule.raw_type,
+                    body=rule.body,
+                    data=rule.data,
                     creator=user.id,
                     creatorName=user.username
                 )
@@ -331,12 +343,18 @@ class UpdateMockByIdSchema(BaseModel):
     rule_id: int = Field(..., description="规则ID")
     path: Optional[str] = Field(None, description="接口路径")
     method: Optional[str] = Field(None, description="请求方法", pattern="^(GET|POST|PUT|DELETE|PATCH)$")
-    status_code: Optional[int] = Field(None, description="响应状态码", ge=200, le=599, alias="statusCode")
+    status_code: Optional[int] = Field(None, description="响应状态码", ge=200, le=599)
     mockname: Optional[str] = Field(None, description="Mock接口名称")
     description: Optional[str] = Field(None, description="规则描述")
     response: Optional[Union[dict, str]] = Field(None, description="响应内容")
     headers: Optional[dict] = Field(None, description="响应头")
     delay: Optional[float] = Field(None, description="延迟响应(毫秒)", ge=0, le=10000)
+    params: Optional[dict] = Field(None, description="请求参数")
+    request_headers: Optional[dict] = Field(None, description="请求头")
+    body_type: Optional[int] = Field(None, description="0无 1raw 2data 3..")
+    raw_type: Optional[str] = Field(None, description="raw 类型 json text")
+    body: Optional[dict] = Field(None, description="请求体")
+    data: Optional[dict] = Field(None, description="表单")
 
     @validator('response')
     def parse_response(cls, v):
@@ -413,10 +431,25 @@ async def update_mock_rule_by_id(
                 # 4. 准备更新数据
                 update_data = data.model_dump(
                     exclude_unset=True,
-                    exclude={"rule_id"}
+                    exclude={"rule_id"},
+                    by_alias=True  # 确保使用字段别名
                 )
-                if "statusCode" in update_data:
-                    update_data["status_code"] = update_data.pop("statusCode")
+                # 确保status_code字段被正确映射
+                if "status_code" in update_data:
+                    update_data["status_code"] = update_data["status_code"]
+                # 确保新字段被正确映射
+                if "body_type" in update_data:
+                    update_data["body_type"] = update_data["body_type"]
+                if "raw_type" in update_data:
+                    update_data["raw_type"] = update_data["raw_type"]
+                if "body" in update_data:
+                    update_data["body"] = update_data["body"]
+                if "data" in update_data:
+                    update_data["data"] = update_data["data"]
+                if "params" in update_data:
+                    update_data["params"] = update_data["params"]
+                if "request_headers" in update_data:
+                    update_data["request_headers"] = update_data["request_headers"]
 
                 # 5. 执行更新
                 await MockRuleMapper.update_by_id(
