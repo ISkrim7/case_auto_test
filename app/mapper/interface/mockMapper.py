@@ -8,7 +8,7 @@
 
 from typing import List, Dict, Optional, Sequence, Any
 from fastapi.exceptions import HTTPException
-from sqlalchemy import select, and_, update, delete, insert, func
+from sqlalchemy import select, and_, update, delete, insert, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.model.interface.mockModel import MockRuleModel, MockConfigModel
 from app.mapper import Mapper
@@ -55,26 +55,36 @@ class MockRuleMapper(Mapper):
         result = await session.execute(query)
         return result.scalars().all()
 
-    # @classmethod
-    # async def get_by_id(cls, rule_id: int, session: AsyncSession = None) -> Optional[MockRuleModel]:
-    #     """
-    #     根据ID获取mock规则详情
-    #     :param rule_id: 规则ID
-    #     :param session: 可选数据库会话
-    #     :return: MockRuleModel对象或None
-    #     """
-    #     try:
-    #         query = select(MockRuleModel).where(MockRuleModel.id == rule_id)
-    #         if not session:
-    #             async with async_session() as session:
-    #                 async with session.begin():
-    #                     result = await session.execute(query)
-    #                     return result.scalar_one_or_none()
-    #         result = await session.execute(query)
-    #         return result.scalar_one_or_none()
-    #     except Exception as e:
-    #         log.exception(f"根据ID查询mock规则失败: {e}")
-    #         raise
+    @classmethod
+    async def get_accessible_rules(
+            cls,
+            user_id: Optional[int],
+            session: AsyncSession
+    ) -> List[MockRuleModel]:
+        """获取用户可访问的规则"""
+        # 基础查询
+        query = select(MockRuleModel).where(MockRuleModel.enable == True)
+        result = await session.execute(query)
+
+        all_rules = result.scalars().all()
+        # 过滤出可访问规则
+        accessible_rules = []
+        for rule in all_rules:
+            # 规则所有者直接访问
+            if rule.user_id == user_id:
+                accessible_rules.append(rule)
+                continue
+            # 公共访问规则
+            if rule.access_level == 2:
+                accessible_rules.append(rule)
+                continue
+
+            # 登录用户可访问规则
+            if user_id and rule.access_level == 1:
+                accessible_rules.append(rule)
+        return accessible_rules
+
+
     @classmethod
     async def get_by_id(
             cls,
@@ -95,44 +105,7 @@ class MockRuleMapper(Mapper):
         4. 更完善的日志记录
         5. 确保资源安全释放
         """
-        # # 验证输入参数
-        # if not isinstance(rule_id, int) or rule_id <= 0:
-        #     error_msg = f"无效的规则ID: {rule_id} (必须是正整数)"
-        #     log.error(error_msg)
-        #     if raise_error:
-        #         raise ValueError(error_msg)
-        #     return None
-        #
-        # try:
-        #     # 构建查询
-        #     query = select(MockRuleModel).where(
-        #         MockRuleModel.id == rule_id,
-        #         MockRuleModel.user_id == user_id
-        #     )
-        #
-        #     # 使用外部会话或创建新会话
-        #     if session:
-        #         result = await session.execute(query)
-        #         rule = result.scalar_one_or_none()
-        #     else:
-        #         async with async_session() as new_session:
-        #             async with new_session.begin():
-        #                 result = await new_session.execute(query)
-        #                 rule = result.scalar_one_or_none()
-        #
-        #     # 处理查询结果
-        #     if not rule and raise_error:
-        #         error_msg = f"未找到ID为 {rule_id} 的Mock规则"
-        #         log.warning(error_msg)
-        #         raise NotFind(error_msg)
-        #
-        #     return rule
-        #
-        # except NotFind as nf:
-        #     # 已处理的未找到异常
-        #     if raise_error:
-        #         raise nf
-        #     return None
+
         """安全获取规则方法"""
         try:
             # 验证输入参数
@@ -174,41 +147,7 @@ class MockRuleMapper(Mapper):
 
     @classmethod
     async def get_active_rules(cls,user_id: int, session: AsyncSession = None) -> List[MockRuleModel]:
-        # """获取指定用户启用的mock规则"""
-        # query = select(MockRuleModel).where(
-        #     MockRuleModel.enable == True,
-        #     MockRuleModel.user_id == user_id  # 按用户过滤
-        # )
-        # """获取所有启用的mock规则"""
-        # #query = select(MockRuleModel).where(MockRuleModel.enable == True)
-        # query = query.with_only_columns(
-        #     MockRuleModel.interface_id,
-        #     MockRuleModel.path,
-        #     MockRuleModel.mockname,
-        #     MockRuleModel.method,
-        #     MockRuleModel.status_code,
-        #     MockRuleModel.response,
-        #     MockRuleModel.delay,
-        #     MockRuleModel.enable,
-        #     MockRuleModel.description,
-        #     MockRuleModel.creator,
-        #     MockRuleModel.creatorName,
-        #     MockRuleModel.create_time,
-        #     MockRuleModel.update_time,
-        #     MockRuleModel.headers,
-        #     MockRuleModel.cookies,
-        #     MockRuleModel.content_type,
-        #     MockRuleModel.script,
-        #     MockRuleModel.id,
-        #     MockRuleModel.uid
-        # )
-        # if not session:
-        #     async with async_session() as session:
-        #         async with session.begin():
-        #             result = await session.execute(query)
-        #             return result.scalars().all()
-        # result = await session.execute(query)
-        # return result.scalars().all()
+
         """可靠获取用户启用的mock规则"""
         try:
             log.debug(f"获取用户{user_id}启用的Mock规则")
@@ -323,25 +262,82 @@ class MockRuleMapper(Mapper):
         :return: MockRuleModel对象或None
         """
         try:
+            # 标准化路径
+            clean_path = path.rstrip('/')
+            if not clean_path.startswith('/'):
+                clean_path = f'/{clean_path}'
+            # query = select(MockRuleModel).where(
+            #     and_(
+            #         MockRuleModel.path == path,
+            #         MockRuleModel.method == method.upper(),
+            #         MockRuleModel.user_id == user_id  # 添加用户过滤
+            #     )
+            # )
+            # 构建查询
             query = select(MockRuleModel).where(
                 and_(
-                    MockRuleModel.path == path,
+                    MockRuleModel.path == clean_path,
                     MockRuleModel.method == method.upper(),
-                    MockRuleModel.user_id == user_id  # 添加用户过滤
+                    or_(
+                        MockRuleModel.user_id == user_id,
+                        MockRuleModel.access_level > 0
+                    )
                 )
+            ).order_by(MockRuleModel.access_level.desc())  # 优先高访问级别
+
+
+            result = await session.execute(query)
+            #return result.scalar_one_or_none()
+            return result.scalars().first()
+
+        except Exception as e:
+            log.exception(f"根据路径和方法查询mock规则失败: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"查询Mock规则失败: {str(e)}"
             )
 
-            # if session:
-            #     result = await session.execute(query)
-            #     return result.scalar_one_or_none()
-            # else:
-            #     async with async_session() as new_session:
-            #         async with new_session.begin():
-            #             result = await new_session.execute(query)
-            #             return result.scalar_one_or_none()
-            # 直接使用传入的会话执行查询
+    @classmethod
+    async def get_nosessionby_path_method(
+            cls,
+            path: str,
+            method: str,
+            session: AsyncSession = None
+    ) -> Optional[MockRuleModel]:
+        """
+        根据路径和方法获取mock规则
+        :param path: 接口路径
+        :param method: 请求方法
+        :param session: 数据库会话
+        :return: MockRuleModel对象或None
+        """
+        try:
+            # 标准化路径
+            clean_path = path.rstrip('/')
+            if not clean_path.startswith('/'):
+                clean_path = f'/{clean_path}'
+            # query = select(MockRuleModel).where(
+            #     and_(
+            #         MockRuleModel.path == path,
+            #         MockRuleModel.method == method.upper(),
+            #         MockRuleModel.user_id == user_id  # 添加用户过滤
+            #     )
+            # )
+            # 构建查询
+            query = select(MockRuleModel).where(
+                and_(
+                    MockRuleModel.path == clean_path,
+                    MockRuleModel.method == method.upper(),
+                    or_(
+                        MockRuleModel.access_level > 1
+                    )
+                )
+            ).order_by(MockRuleModel.access_level.desc())  # 优先高访问级别
+
+
             result = await session.execute(query)
-            return result.scalar_one_or_none()
+            #return result.scalar_one_or_none()
+            return result.scalars().first()
 
         except Exception as e:
             log.exception(f"根据路径和方法查询mock规则失败: {e}")
@@ -357,6 +353,8 @@ class MockRuleMapper(Mapper):
         method: str,
         status_code: int,
         user_id: int,
+        access_level: int = 0,
+        domain: Optional[str] = None,
         mockname: Optional[str] = None,
         response: Optional[dict] = None,
         delay: Optional[float] = None,
@@ -384,55 +382,6 @@ class MockRuleMapper(Mapper):
         4. 修复Session绑定问题
         """
         try:
-            # # 校验path格式
-            # if not path or not path.startswith('/'):
-            #     raise ValueError("path必须以/开头且不能为空")
-            #
-            # # 统一转换为小写比较路径和方法，避免大小写不一致导致的重复
-            # normalized_path = path.lower()
-            # normalized_method = method.lower()
-            #
-            # # 检查是否已存在相同路径和方法的规则
-            # if session:
-            #     existing_rule = await cls.get_by_path_method(path, method, session)
-            # else:
-            #     async with async_session() as temp_session:
-            #         existing_rule = await cls.get_by_path_method(path, method, temp_session)
-            #
-            # if existing_rule:
-            #     # 如果规则已存在，直接返回友好错误
-            #     raise HTTPException(
-            #         status_code=409,
-            #         detail=f"该路径({path})和方法({method})的Mock规则已存在，请勿重复创建"
-            #     )
-            #
-            # # 准备创建数据
-            # kwargs = {
-            #     "path": path,
-            #     "mockname": mockname,
-            #     "method": method,
-            #     "status_code": status_code,
-            #     "response": response,
-            #     "delay": delay,
-            #     "description": description,
-            #     "headers": headers,
-            #     "cookies": cookies,
-            #     "content_type": content_type,
-            #     "script": script,
-            #     "interface_id": interface_id,
-            #     "user_id": user_id,
-            #     "creator": creator,
-            #     "creatorName": creatorName
-            # }
-            #
-            # # 使用事务确保创建操作的原子性
-            # if session:
-            #     return await cls.save_no_session(session=session, **kwargs)
-            # else:
-            #     async with async_session() as temp_session:
-            #         async with temp_session.begin():
-            #             return await cls.save_no_session(session=temp_session, **kwargs)
-            # 检查是否已存在相同规则
             existing_rule = await cls.get_by_path_method(
                 path=path,
                 method=method,
@@ -462,6 +411,8 @@ class MockRuleMapper(Mapper):
                 delay=int(delay) if delay else None,
                 description=description,
                 headers=headers,
+                access_level=access_level,
+                domain=domain,
                 cookies=cookies,
                 content_type=content_type,
                 params=params,
@@ -521,13 +472,7 @@ class MockRuleMapper(Mapper):
             MockRuleModel.user_id == user_id
         ]
         try:
-            # if session:
-            #     await session.execute(delete(MockRuleModel).where(MockRuleModel.id == rule_id))
-            # else:
-            #     async with async_session() as session:
-            #         async with session.begin():
-            #             await session.execute(delete(MockRuleModel).where(MockRuleModel.id == rule_id))
-            # 使用传入的会话执行删除操作
+
             await session.execute(
                 delete(MockRuleModel).where(and_(*where_conditions))
             )
@@ -544,42 +489,7 @@ class MockRuleMapper(Mapper):
         user_id: int,  # 新增用户ID参数
         session: AsyncSession = None
     ) -> int:
-        # """
-        # 根据规则ID更新mock规则
-        # :param rule_id: 规则ID
-        # :param values: 更新字段字典
-        # :param session: 可选数据库会话
-        # :return: 影响的行数
-        # """
-        # where_conditions = [
-        #     MockRuleModel.id == rule_id,
-        #     MockRuleModel.user_id == user_id
-        # ]
-        # try:
-        #     if not values:
-        #         return 0
-        #
-        #     if session:
-        #         # result = await session.execute(
-        #         #     update(MockRuleModel)
-        #         #     .where(MockRuleModel.id == rule_id)
-        #         #     .values(**values)
-        #         # )
-        #         result = await session.execute(
-        #             update(MockRuleModel)
-        #             .where(and_(*where_conditions))
-        #             .values(**values)
-        #         )
-        #         return result.rowcount
-        #     else:
-        #         async with async_session() as session:
-        #             async with session.begin():
-        #                 result = await session.execute(
-        #                     update(MockRuleModel)
-        #                     .where(MockRuleModel.id == rule_id)
-        #                     .values(**values)
-        #                 )
-        #                 return result.rowcount
+
         try:
             # 详细日志
             log.debug(f"更新规则ID={rule_id}, 用户ID={user_id}, 值={values}")
@@ -608,122 +518,110 @@ class MockRuleMapper(Mapper):
         except Exception as e:
             log.exception(f"更新规则失败: ID={rule_id}, 错误={str(e)}")
             raise
-
 class MockConfigMapper(Mapper):
     """Mock配置数据访问"""
     __model__ = MockConfigModel
 
     @classmethod
-    async def get_config(cls, name: str, user_id: int,session: AsyncSession = None) -> Optional[MockConfigModel]:
-        """获取用户的配置项"""
-        query = select(MockConfigModel).where(
-            MockConfigModel.name == name,
-            MockConfigModel.user_id == user_id
-        )
-        """获取配置项"""
-        return await cls.get_by(name=name, session=session)
+    async def get_effective_config(
+            cls,
+            user_id: Optional[int],
+            session: AsyncSession
+    ) -> dict:
+        """获取有效配置（合并全局和用户配置）"""
+        # 获取全局配置
+        global_config = await cls.get_config(0, session) or {}
+
+        # 登录用户获取个人配置
+        if user_id:
+            user_config = await cls.get_config(user_id, session) or {}
+            # 合并配置（用户配置覆盖全局）
+            return {**global_config, **user_config}
+
+        return global_config
 
     @classmethod
-    async def set_config(cls, name: str, value: str, creatorUser: User, user_id: int, session: AsyncSession = None) -> int:
-        """设置配置项"""
+    async def get_config(cls, user_id: int, session: AsyncSession) -> Optional[dict]:
+        """获取用户的所有mock配置"""
         try:
-            # config = await cls.get_by(name=name, user_id=user_id, session=session)
-            # if config:
-            #     # return await cls.update_by_id(
-            #     #     id=config.id,
-            #     #     values={"value": value},
-            #     #     updateUser=creatorUser,
-            #     #     session=session
-            #     # )
-            #     # 更新现有配置
-            #     # await session.execute(
-            #     #     update(MockConfigModel)
-            #     #     .where(
-            #     #         MockConfigModel.id == config.id,
-            #     #         MockConfigModel.user_id == user_id
-            #     #     )
-            #     #     .values(value=value)
-            #     # )
-            #     # return 1
-            #     # 更新现有配置
-            #     config.value = value
-            #     session.add(config)
-            #     return 1
-            # else:
-            #     # if session:
-            #     #     return await cls.save(creatorUser=creatorUser, session=session, name=name, value=value)
-            #     # else:
-            #     #     async with async_session() as new_session:
-            #     #         async with new_session.begin():
-            #     #             return await cls.save(creatorUser=creatorUser, session=new_session, name=name, value=value)
-            #     # 创建新配置
-            #     new_config = MockConfigModel(
-            #         user_id=user_id,
-            #         name=name,
-            #         value=value,
-            #         description="用户Mock配置",
-            #         creator=creatorUser.id,          # 使用正确字段名
-            #         creatorName=creatorUser.username  # 使用正确字段名
-            #     )
-            #     session.add(new_config)
-            #     return 1
-            # 使用更可靠的查询方法
             query = select(MockConfigModel).where(
-                MockConfigModel.name == name,
+                MockConfigModel.name == "mock_settings",
                 MockConfigModel.user_id == user_id
             )
             result = await session.execute(query)
             config = result.scalars().first()
 
             if config:
-                # 更新现有配置
-                config.value = value
-                # session.add(config)
-                # await session.commit()  # 确保事务提交
-                # return 1
-            else:
-                # 创建新配置
-                new_config = MockConfigModel(
+                return config.value
+
+            # 返回默认配置
+            return {"enabled": False, "require_mock_flag": True, "browser_friendly": True}
+
+        except Exception as e:
+            log.exception(f"获取mock配置失败: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="获取配置失败"
+            )
+
+    @classmethod
+    async def update_config(cls, creatorUser: User, user_id: int, updates: dict, session: AsyncSession) -> dict:
+        """更新mock配置"""
+        try:
+            # 验证输入参数
+            if not updates or not isinstance(updates, dict):
+                raise ValueError("更新内容必须是非空字典")
+
+            # 获取或创建配置
+            query = select(MockConfigModel).where(
+                MockConfigModel.name == "mock_settings",
+                MockConfigModel.user_id == user_id
+            )
+            result = await session.execute(query)
+            config = result.scalars().first()
+
+            if not config:
+                # 如果不存在则创建默认配置
+                default_config = MockConfigModel.get_default_configs()[0]
+                config = MockConfigModel(
                     user_id=user_id,
-                    name=name,
-                    value=value,
-                    description="用户Mock配置",
+                    name=default_config["name"],
+                    value=default_config["value"],
+                    description=default_config["description"],
                     creator=creatorUser.id,
                     creatorName=creatorUser.username
                 )
-                session.add(new_config)
-                # await session.commit()  # 确保事务提交
-            return 1
+                session.add(config)
+                await session.flush()
+
+            # 合并更新并确保提交
+            current_value = config.value.copy()
+            current_value.update(updates)
+            config.value = current_value
+
+            # 显式提交事务
+            await session.commit()
+            await session.refresh(config)
+
+            log.info(f"用户{user_id}配置更新成功: {current_value}")
+            return current_value
+
         except Exception as e:
-            log.exception(f"设置配置项失败: {e}")
-            # 添加唯一约束冲突的专门处理
-            if "unique constraint" in str(e).lower() or "duplicate entry" in str(e).lower():
-                raise HTTPException(
-                    status_code=409,
-                    detail="配置项已存在"
-                )
-            raise
+            await session.rollback()
+            log.exception(f"更新mock配置失败: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"更新配置失败: {str(e)}"
+            )
 
     @classmethod
-    async def is_mock_enabled(cls, user_id: int, session: AsyncSession = None) -> bool:
+    async def is_mock_enabled(cls,user_id: int, session: AsyncSession) -> bool:
         """检查全局mock是否启用"""
-        if session is None:
-            log.error("检查Mock启用状态失败: session参数不能为None")
-            return False
-
         try:
-            query = select(MockConfigModel).where(
-                MockConfigModel.name == "mock_enabled",
-                MockConfigModel.user_id == user_id
-            )
-            result = await session.execute(query)
-            config = result.scalars().first()
-
-            if config:
-                log.debug(f"用户{user_id}的Mock状态: {config.value}")
-                return config.value.lower() == "true"
-            log.debug(f"用户{user_id}没有Mock配置记录")
-            return False
+            config = await cls.get_config(user_id, session)
+            if config is None:
+                return False
+            return config.get("enabled", False)
         except Exception as e:
             log.error(f"检查Mock启用状态失败: {e}")
             return False
@@ -772,7 +670,7 @@ class MockConfigMapper(Mapper):
 
             # 查询现有配置
             query = select(MockConfigModel).where(
-                MockConfigModel.name == "mock_enabled",
+                MockConfigModel.name == "mock_settings",
                 MockConfigModel.user_id == user_id
             )
             result = await session.execute(query)
@@ -781,14 +679,14 @@ class MockConfigMapper(Mapper):
             # 存在则更新，不存在则创建
             if config:
                 log.info(f"找到现有配置: ID={config.id}")
-                config.value = str(enabled).lower()
+                config.value = {"enabled": enabled}
                 log.info(f"更新配置值: {config.value}")
             else:
                 log.warning(f"用户{user_id}无配置记录，创建新配置")
                 config = MockConfigModel(
                     user_id=user_id,
-                    name="mock_enabled",
-                    value=str(enabled).lower(),
+                    name="mock_settings",
+                    value={"enabled": enabled},
                     description="用户Mock配置",
                     creator=creatorUser.id,
                     creatorName=creatorUser.username

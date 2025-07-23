@@ -13,13 +13,20 @@ from app.model.basic import BaseModel
 class MockRuleModel(BaseModel):
     """Mock规则表"""
     __tablename__ = 'mock_rule'
-    __table_args__ = {
-        'sqlite_autoincrement': True,
-        'mysql_engine': 'InnoDB',
-        'mysql_charset': 'utf8mb4',
-        'mysql_collate': 'utf8mb4_general_ci',
-        'comment': 'Mock规则表'
-    }
+    # __table_args__ = {
+    #     'sqlite_autoincrement': True,
+    #     'mysql_engine': 'InnoDB',
+    #     'mysql_charset': 'utf8mb4',
+    #     'mysql_collate': 'utf8mb4_general_ci',
+    #     'comment': 'Mock规则表'
+    # }
+    # 修改唯一键约束，移除path唯一性，允许同名不同访问级别
+    __table_args__ = (
+        UniqueConstraint(
+            'user_id', 'method', 'path', 'access_level',
+            name='uq_user_method_path_access'
+        ),
+    )
     user_id = Column(INTEGER, nullable=False, comment="所属用户ID", index=True)  # 新增用户ID字段
     interface_id = Column(INTEGER, ForeignKey("interface.id", ondelete="CASCADE"), comment="关联接口ID")
     path = Column(String(500), nullable=False, comment="接口路径")
@@ -29,6 +36,17 @@ class MockRuleModel(BaseModel):
     response = Column(JSON, nullable=True, comment="响应内容")
     delay = Column(INTEGER, nullable=True, comment="延迟响应(毫秒)")
     enable = Column(BOOLEAN, default=False, comment="是否启用")
+    # 新增访问控制字段
+    access_level = Column(
+        INTEGER,
+        default=0,
+        comment="访问级别: 0-仅创建者, 1-登录用户, 2-公开访问"
+    )
+    domain = Column(
+        String(100),
+        nullable=True,
+        comment="域名限制(空表示不限)"
+    )
     description = Column(String(200), nullable=True, comment="规则描述")
     creator = Column(INTEGER, comment="创建人ID")
     creatorName = Column(String(50), comment="创建人姓名")
@@ -63,6 +81,8 @@ class MockRuleModel(BaseModel):
             "response": self.response,
             "delay": self.delay,
             "enable": self.enable,
+            "access_level": self.access_level,
+            "domain": self.domain,
             "description": self.description,
             "creator": self.creator,
             "creatorName": self.creatorName,
@@ -80,38 +100,41 @@ class MockRuleModel(BaseModel):
             "data": self.data
         }
 
-# class MockConfigModel(BaseModel):
-#     """Mock全局配置表"""
-#     __tablename__ = 'mock_config'
-#
-#     name = Column(String(50), unique=True, nullable=False, comment="配置名称")
-#     value = Column(String(200), nullable=False, comment="配置值")
-#     description = Column(String(200), nullable=True, comment="配置描述")
-#
-#     @staticmethod
-#     def get_default_configs():
-#         """获取默认配置"""
-#         return [
-#             {"name": "mock_enabled", "value": "false", "description": "全局Mock开关"}
-#         ]
 
 # 修改MockConfigModel
 class MockConfigModel(BaseModel):
     """Mock全局配置表"""
     __tablename__ = 'mock_config'
-    user_id = Column(INTEGER, nullable=False, comment="所属用户ID", index=True)  # 新增用户ID字段
+    user_id = Column(INTEGER, nullable=False, comment="所属用户ID", index=True)
     name = Column(String(50), nullable=False, comment="配置名称")
-    value = Column(String(200), nullable=False, comment="配置值")
+    #value = Column(JSON, nullable=False, comment="配置值(JSON格式)")  # 修改为JSON类型
+    value = Column(JSON, nullable=False, comment="配置值(JSON格式)", default={
+        "enabled": False,
+        "require_mock_flag": True,
+        #"require_login": True,
+        "browser_friendly": True,
+        # "public_access": False,  # 是否允许公共访问
+        # "min_access_level": 0    # 最低访问级别
+    })
     description = Column(String(200), nullable=True, comment="配置描述")
-    creator = Column(INTEGER, comment="创建人ID")          # 必需字段
-    creatorName = Column(String(50), comment="创建人姓名")  # 必需字段
+    creator = Column(INTEGER, comment="创建人ID")
+    creatorName = Column(String(50), comment="创建人姓名")
     __table_args__ = (
-        # 修正为复合唯一约束
         UniqueConstraint('user_id', 'name', name='uq_user_name'),
     )
+
     @staticmethod
     def get_default_configs():
         """获取默认配置"""
         return [
-            {"name": "mock_enabled", "value": "false", "description": "全局Mock开关"}
+            {
+                "name": "mock_settings",
+                "value": {
+                    "enabled": False,
+                    "require_mock_flag": False,
+                    #"require_login": False,
+                    "browser_friendly": False
+                },
+                "description": "Mock全局配置"
+            }
         ]

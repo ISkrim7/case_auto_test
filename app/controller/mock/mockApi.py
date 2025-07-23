@@ -7,7 +7,7 @@
 # @Desc: Mock接口功能实现
 
 from fastapi import APIRouter, Depends, BackgroundTasks, Response as FastResponse, Form, UploadFile, File, HTTPException, Query, Request
-from interface.mock import mock_request_checker
+#from interface.mock import mock_request_checker
 from app.controller import Authentication
 from app.mapper.interface.mockMapper import MockRuleMapper, MockConfigMapper
 from app.model.base import User
@@ -21,8 +21,11 @@ from pydantic import validator
 from app.exception import NotFind
 from app.model import async_session
 from interface.mock import get_mock_manager
+from interface.mock import mock_manager  # 导入全局mock_manager实例
 
 router = APIRouter(prefix="/mock", tags=['Mock接口'])
+# 创建新的公共Mock路由器
+public_mock_router = APIRouter(prefix="/mockpublic", tags=['公共Mock接口'])
 
 class CreateMockSchema(BaseSchema):
     """创建Mock规则请求体"""
@@ -355,6 +358,8 @@ class UpdateMockByIdSchema(BaseModel):
     raw_type: Optional[str] = Field(None, description="raw 类型 json text")
     body: Optional[dict] = Field(None, description="请求体")
     data: Optional[dict] = Field(None, description="表单")
+    access_level: Optional[int] = Field(None, description="访问级别 0:私有 1:登录用户可访问 2:公开", ge=0, le=2)
+    domain: Optional[str] = Field(None, description="域名")
 
     @validator('response')
     def parse_response(cls, v):
@@ -838,27 +843,111 @@ async def disable_mock(user: User = Depends(Authentication())):
             status_code=500,
             detail=f"禁用Mock功能失败: {str(e)}"
         )
-
 @router.get("/status",
            description="获取Mock状态",
            responses={
                500: {"description": "服务器内部错误"}
            })
 async def get_mock_status(user: User = Depends(Authentication())):
-    """获取Mock功能状态"""
+    """获取Mock状态"""
     try:
-        # enabled = await MockConfigMapper.is_mock_enabled(user.id)
-        # return Response.success({"enabled": enabled})
         async with async_session() as session:
-            enabled = await MockConfigMapper.is_mock_enabled(user.id, session)
-            return Response.success({
-                "enabled": enabled,
-                "user_id": user.id,
-                "username": user.username
-            })
+            async with session.begin():
+                config = await MockConfigMapper.get_config(user.id, session)
+                if not config:
+                    return Response.success({
+                        "enabled": False,
+                        "require_mock_flag": True,
+                        #"require_login": True,
+                        "browser_friendly": True,
+                        "user_id": user.id,
+                        "username": user.username
+                    })
+                # 合并配置字段到顶层
+                response_data = {
+                    "user_id": user.id,
+                    "username": user.username
+                }
+                response_data.update(config)
+                return Response.success(response_data)
     except Exception as e:
         log.error(f"获取Mock状态失败: {e}")
         raise HTTPException(status_code=500, detail="获取Mock状态失败")
+@router.get("/config",
+           description="获取Mock完整配置",
+           responses={
+               500: {"description": "服务器内部错误"}
+           })
+async def get_mock_config(user: User = Depends(Authentication())):
+    """获取Mock完整配置"""
+    try:
+        async with async_session() as session:
+            async with session.begin():
+                config = await MockConfigMapper.get_config(user.id, session)
+                if not config:
+                    return Response.success({
+                        "enabled": False,
+                        "require_mock_flag": True,
+                        #"require_login": True,
+                        "browser_friendly": True
+                    })
+                # 确保返回格式一致
+                return Response.success({
+                    "enabled": config.get("enabled", False),
+                    "require_mock_flag": config.get("require_mock_flag", True),
+                    #"require_login": config.get("require_login", True),
+                    "browser_friendly": config.get("browser_friendly", True),
+                    "user_id": user.id,
+                    "username": user.username
+                })
+    except Exception as e:
+        log.error(f"获取Mock状态失败: {e}")
+        raise HTTPException(status_code=500, detail="获取Mock状态失败")
+
+@router.put("/config",
+           description="更新Mock配置",
+           responses={
+               400: {"description": "参数验证失败"},
+               500: {"description": "更新配置失败"}
+           })
+async def update_mock_config(
+    config_update: Dict[str, Any],
+    user: User = Depends(Authentication())
+):
+    """更新Mock配置"""
+    try:
+        # 验证参数
+        #valid_fields = {"enabled", "require_mock_flag", "require_login", "browser_friendly"}
+        valid_fields = {"enabled", "require_mock_flag", "browser_friendly"}
+        updates = {
+            k: v for k, v in config_update.items()
+            if k in valid_fields and v is not None
+        }
+
+        if not updates:
+            raise HTTPException(
+                status_code=400,
+                detail="至少需要一个有效配置项"
+            )
+
+        async with async_session() as session:
+            await MockConfigMapper.update_config(
+                creatorUser=user,
+                user_id=user.id,
+                updates=updates,
+                session=session
+            )
+
+            # 刷新缓存
+            manager = await get_mock_manager(user.id, session)
+            manager.user_status.pop(user.id, None)
+
+            return Response.success(msg="配置更新成功")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error(f"更新Mock配置失败: {e}")
+        raise HTTPException(status_code=500, detail=f"更新Mock配置失败: {str(e)}")
 
 @router.post("/link",
             description="关联已有接口",
@@ -969,25 +1058,94 @@ async def get_mock_interfaces(_: User = Depends(Authentication())):
                  include_in_schema=False)
 async def mock_endpoint(full_path: str, request: Request, user: User = Depends(Authentication())):
     """Mock接口端点"""
-    # 检查mock请求头
-    if request.headers.get("X-Mock-Request", "").lower() != "true":
-        return FastResponse(
-            status_code=404,
-            content=json.dumps({
-                "code": 404,
-                "message": "非Mock请求",
-                "suggestion": "如需Mock请求，请添加X-Mock-Request: true请求头"
-            }),
-            media_type="application/json"
-        )
-
     try:
         method = request.method
         log.info(f"Mock端点接收请求: {method} {full_path}")
 
         async with async_session() as session:
-            manager = await get_mock_manager(user.id, session)
-            response = await manager.mock_response(full_path, method, user.id, session)
+            # 尝试获取用户信息，如果未登录则user为None
+            try:
+                if user is None:
+                    user = await Authentication()(request)
+            except Exception:
+                user = None
+
+            # 获取默认配置或用户配置
+            config = await MockConfigMapper.get_config(user.id if user else None, session)
+            if not config:
+                config = {"enabled": False, "require_mock_flag": True, "require_login": True, "browser_friendly": False}
+
+            # 检查mock功能是否启用
+            if not config.get("enabled", False):
+                return FastResponse(
+                    status_code=403,
+                    content=json.dumps({
+                        "code": 403,
+                        "message": "Mock功能未启用",
+                        "suggestion": "请先在设置中启用Mock功能"
+                    }, ensure_ascii=False),
+                    media_type="application/json; charset=utf-8"
+                )
+
+            # 检查是否需要登录
+            if config.get("require_login", True) and user is None:
+                return FastResponse(
+                    status_code=401,
+                    content=json.dumps({
+                        "code": 401,
+                        "message": "请先登录",
+                        "suggestion": "此接口需要登录才能访问"
+                    }, ensure_ascii=False),
+                    media_type="application/json; charset=utf-8"
+                )
+
+            # 检查是否需要mock请求头
+            if config.get("require_mock_flag", True):
+                if request.headers.get("X-Mock-Request", "").lower() != "true":
+                    return FastResponse(
+                        status_code=404,
+                        content=json.dumps({
+                            "code": 404,
+                            "message": "非Mock请求",
+                            "suggestion": "如需Mock请求，请添加X-Mock-Request: true请求头"
+                        }, ensure_ascii=False),
+                        media_type="application/json; charset=utf-8"
+                    )
+
+            # 获取mock管理器
+            manager = await get_mock_manager(user.id if user else None, session)
+
+            # 检查浏览器友好模式
+            if config.get("browser_friendly", False) and "text/html" in request.headers.get("Accept", ""):
+                # 返回HTML格式的响应
+                response = await manager.mock_response(full_path, method, user.id if user else None, session)
+
+                if response is None:
+                    return FastResponse(
+                        status_code=404,
+                        content="<html><body><h1>404 Not Found</h1><p>未找到匹配的Mock规则</p></body></html>",
+                        media_type="text/html"
+                    )
+
+                # 转换JSON响应为HTML格式
+                if isinstance(response.body, dict) or isinstance(response.body, list):
+                    html_content = f"""
+                    <html>
+                        <body>
+                            <h1>Mock Response</h1>
+                            <pre>{json.dumps(response.body, indent=2, ensure_ascii=False)}</pre>
+                        </body>
+                    </html>
+                    """
+                    return FastResponse(
+                        status_code=response.status_code,
+                        content=html_content,
+                        media_type="text/html"
+                    )
+                return response
+
+            # 正常处理API请求
+            response = await manager.mock_response(full_path, method, user.id if user else None, session)
 
             if response is None:
                 log.warning(f"未找到匹配的Mock规则: {method} {full_path}")
@@ -996,15 +1154,49 @@ async def mock_endpoint(full_path: str, request: Request, user: User = Depends(A
                     content=json.dumps({
                         "code": 404,
                         "message": f"未找到Mock规则: {full_path}",
-                        "suggestion": "请检查路径和方法是否正确"
-                    }),
-                    media_type="application/json"
+                        "suggestion": "请检查路径和方法是否正确或启用"
+                    }, ensure_ascii=False),
+                    media_type="application/json; charset=utf-8"
                 )
 
             return response
 
     except Exception as e:
         log.exception(f"Mock处理失败: {str(e)}")
+        return FastResponse(
+            status_code=500,
+            content=json.dumps({"error": str(e)})
+        )
+@public_mock_router.api_route("/{full_path:path}",
+                  methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+                  include_in_schema=False)
+async def public_mock_endpoint(full_path: str, request: Request):
+    """公共Mock接口端点"""
+    try:
+        method = request.method
+        log.info(f"公共Mock端点接收请求: {method} {full_path}")
+
+        # 处理公共Mock请求
+        response = await mock_manager.nosessionmock_response(
+            full_path, method, request
+        )
+
+        if response is None:
+            log.warning(f"未找到匹配的公共Mock规则: {method} {full_path}")
+            return FastResponse(
+                status_code=404,
+                content=json.dumps({
+                    "code": 404,
+                    "message": f"未找到公共Mock规则: {full_path}",
+                    "suggestion": "请检查路径和方法是否正确"
+                }, ensure_ascii=False),
+                media_type="application/json; charset=utf-8"
+            )
+
+        return response
+
+    except Exception as e:
+        log.exception(f"公共Mock处理失败: {str(e)}")
         return FastResponse(
             status_code=500,
             content=json.dumps({"error": str(e)})

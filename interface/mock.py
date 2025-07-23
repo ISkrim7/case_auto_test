@@ -11,6 +11,7 @@ from fastapi import Request, Response as FastResponse
 from httpx import Response
 import json
 import asyncio
+import re
 from utils import MyLoguru
 from app.mapper.interface.mockMapper import MockRuleMapper, MockConfigMapper
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -241,139 +242,379 @@ class MockManager:
         log.info("Cleared all mock rules from database and memory")
 
 
-    async def mock_response(self, path: str, method: str, user_id: int, session: AsyncSession) -> Optional[FastResponse]:
-
+    async def mock_response(self, path: str, method: str, user_id: int, session: AsyncSession, request: Request = None) -> Optional[FastResponse]:
         """增强匹配日志的Mock响应处理"""
         try:
             log.info(f"====== 开始处理Mock请求: {method} {path} ======")
 
-            # 1. 检查全局Mock状态
-            user_enabled = await MockConfigMapper.is_mock_enabled(user_id, session)
-            log.debug(f"用户 {user_id} 全局Mock状态: {user_enabled}")
+            # 1. 获取mock配置
+            #mock_config = await MockConfigMapper.get_config(user_id, session)
+            # if not mock_config:
+            #     log.error(f"用户 {user_id} 的Mock配置不存在")
+            #     return None
+            mock_config = await MockConfigMapper.get_effective_config(user_id, session)
+            # 检查是否启用Mock功能
+            # if not mock_config.get("enabled", False):
+            #     log.info(f"用户 {user_id} 的Mock功能未启用")
+            #     return None
 
-            if not user_enabled:
-                log.info(f"用户 {user_id} 的Mock功能未启用")
+            # 检查是否需要mock标志
+            # if mock_config.get("require_mock_flag", True):
+            #     if not request or request.headers.get("X-Mock-Request", "").lower() != "true":
+            #         log.info("请求缺少mock标志")
+            #         return None
+            # 4. 获取客户端域名
+            #domain = request.headers.get("Host", "")
+            # 5. 获取匹配规则
+            rule = await self.find_matching_rule(
+                #path, method, domain, user_id, session
+                path, method, user_id, session
+            )
+            log.info(f"mockpy用户 {user_id} 的rule:{rule}")
+
+            if not rule:
+                log.warning(f"未找到匹配规则: {method} {path}")
                 return None
+            # 6. 检查访问权限
+            if not self.check_access(rule, user_id, mock_config):
+                log.info(f"check_access {user_id} 的rule:{rule}")
+                log.warning(f"用户 {user_id} 无权限访问规则 {rule.id}")
+                return FastResponse(
+                    status_code=403,
+                    content=json.dumps({
+                        "code": 403,
+                        "message": "无权访问此规则"
+                    }, ensure_ascii=False),
+                    media_type="application/json; charset=utf-8"
+                )
+            # 7. 构建响应
+            return await self._build_response(rule)
 
-            # 2. 加载用户规则
-            log.debug("加载用户规则...")
-            await self._load_user_rules(user_id, session)
-            user_rules = self.user_rules.get(user_id, {})
-
-            # 记录所有规则
-            log.debug(f"用户 {user_id} 的所有规则: {list(user_rules.keys())}")
-            log.info(f"内存中加载的规则数量: {len(user_rules)}")
-
-            # 3. 标准化请求路径
-            clean_path = path.split('?')[0]  # 移除查询参数
-            # 确保路径以斜杠开头
-            standardized_path = clean_path if clean_path.startswith('/') else f'/{clean_path}'
-            standardized_path = standardized_path.rstrip('/')  # 移除结尾斜杠
-            log.debug(f"标准化路径: '{standardized_path}' (原始: '{clean_path}')")
-
-            # 4. 尝试匹配规则
-            matching_key = None
-            matched_rule = None
-
-            # 精确匹配
-            exact_key = f"{method.upper()}:{standardized_path}"
-            log.debug(f"尝试精确匹配: {exact_key}")
-            if exact_key in user_rules:
-                matching_key = exact_key
-                matched_rule = user_rules[exact_key]
-                log.info(f"精确匹配成功: {exact_key}")
-
-            # 前缀匹配
-            if not matched_rule:
-                log.debug("精确匹配失败，尝试前缀匹配...")
-                for rule_key in user_rules:
-                    rule_method, rule_path = rule_key.split(":", 1)
-                    rule_path = rule_path.rstrip('/')
-
-                    # 确保规则路径以斜杠开头
-                    if not rule_path.startswith('/'):
-                        rule_path = f'/{rule_path}'
-
-                    # 比较标准化后的路径
-                    if method.upper() == rule_method and standardized_path == rule_path:
-                        matching_key = rule_key
-                        matched_rule = user_rules[rule_key]
-                        log.info(f"前缀匹配成功: {rule_key}")
-                        break
-
-            # 后缀匹配
-            if not matched_rule:
-                log.debug("前缀匹配失败，尝试后缀匹配...")
-                for rule_key in user_rules:
-                    rule_method, rule_path = rule_key.split(":", 1)
-                    rule_path = rule_path.rstrip('/')
-
-                    if method.upper() == rule_method and standardized_path.endswith(rule_path):
-                        matching_key = rule_key
-                        matched_rule = user_rules[rule_key]
-                        log.info(f"后缀匹配成功: {rule_key}")
-                        break
-
-            # 通配符匹配
-            if not matched_rule:
-                log.debug("后缀匹配失败，尝试通配符匹配...")
-                for rule_key in user_rules:
-                    rule_method, rule_path = rule_key.split(":", 1)
-                    rule_path = rule_path.rstrip('/')
-
-                    # 处理通配符
-                    if '*' in rule_path:
-                        pattern = rule_path.replace('*', '.*')
-                        import re
-                        if re.match(pattern, standardized_path) and method.upper() == rule_method:
-                            matching_key = rule_key
-                            matched_rule = user_rules[rule_key]
-                            log.info(f"通配符匹配成功: {rule_key} -> {standardized_path}")
-                            break
-
-            # 5. 构建响应
-            if matched_rule:
-                log.info(f"找到匹配规则: {matching_key}")
-                return await self._build_response(matched_rule)
-
-            log.warning(f"未找到匹配规则: 方法={method} 路径={standardized_path}")
-            log.debug(f"所有尝试的规则: {list(user_rules.keys())}")
-            return None
+            # # 检查登录状态要求
+            # if mock_config.get("require_login", True):
+            #     if not user_id or user_id <= 0:
+            #         log.info("请求需要登录状态")
+            #         return FastResponse(
+            #             status_code=401,
+            #             content=json.dumps({"code": 401, "message": "需要登录"}),
+            #             media_type="application/json"
+            #         )
+            #
+            # # 2. 加载用户规则
+            # log.debug("加载用户规则...")
+            # await self._load_user_rules(user_id, session)
+            # user_rules = self.user_rules.get(user_id, {})
+            #
+            # # 记录所有规则
+            # log.debug(f"用户 {user_id} 的所有规则: {list(user_rules.keys())}")
+            # log.info(f"内存中加载的规则数量: {len(user_rules)}")
+            #
+            # # 如果是浏览器直接访问且配置允许，返回友好提示
+            # if request and "text/html" in request.headers.get("accept", "") and mock_config.get("browser_friendly", True):
+            #     return FastResponse(
+            #         status_code=200,
+            #         content=f"<h1>Mock服务已启用</h1><p>当前路径: {path}</p>",
+            #         media_type="text/html"
+            #     )
+            #
+            # # 3. 标准化请求路径
+            # clean_path = path.split('?')[0]  # 移除查询参数
+            # # 确保路径以斜杠开头
+            # standardized_path = clean_path if clean_path.startswith('/') else f'/{clean_path}'
+            # standardized_path = standardized_path.rstrip('/')  # 移除结尾斜杠
+            # log.debug(f"标准化路径: '{standardized_path}' (原始: '{clean_path}')")
+            #
+            # # 4. 尝试匹配规则
+            # matching_key = None
+            # matched_rule = None
+            #
+            # # 精确匹配
+            # exact_key = f"{method.upper()}:{standardized_path}"
+            # log.debug(f"尝试精确匹配: {exact_key}")
+            # if exact_key in user_rules:
+            #     matching_key = exact_key
+            #     matched_rule = user_rules[exact_key]
+            #     log.info(f"精确匹配成功: {exact_key}")
+            #
+            # # 前缀匹配
+            # if not matched_rule:
+            #     log.debug("精确匹配失败，尝试前缀匹配...")
+            #     for rule_key in user_rules:
+            #         rule_method, rule_path = rule_key.split(":", 1)
+            #         rule_path = rule_path.rstrip('/')
+            #
+            #         # 确保规则路径以斜杠开头
+            #         if not rule_path.startswith('/'):
+            #             rule_path = f'/{rule_path}'
+            #
+            #         # 比较标准化后的路径
+            #         if method.upper() == rule_method and standardized_path == rule_path:
+            #             matching_key = rule_key
+            #             matched_rule = user_rules[rule_key]
+            #             log.info(f"前缀匹配成功: {rule_key}")
+            #             break
+            #
+            # # 后缀匹配
+            # if not matched_rule:
+            #     log.debug("前缀匹配失败，尝试后缀匹配...")
+            #     for rule_key in user_rules:
+            #         rule_method, rule_path = rule_key.split(":", 1)
+            #         rule_path = rule_path.rstrip('/')
+            #
+            #         if method.upper() == rule_method and standardized_path.endswith(rule_path):
+            #             matching_key = rule_key
+            #             matched_rule = user_rules[rule_key]
+            #             log.info(f"后缀匹配成功: {rule_key}")
+            #             break
+            #
+            # # 通配符匹配
+            # if not matched_rule:
+            #     log.debug("后缀匹配失败，尝试通配符匹配...")
+            #     for rule_key in user_rules:
+            #         rule_method, rule_path = rule_key.split(":", 1)
+            #         rule_path = rule_path.rstrip('/')
+            #
+            #         # 处理通配符
+            #         if '*' in rule_path:
+            #             pattern = rule_path.replace('*', '.*')
+            #             import re
+            #             if re.match(pattern, standardized_path) and method.upper() == rule_method:
+            #                 matching_key = rule_key
+            #                 matched_rule = user_rules[rule_key]
+            #                 log.info(f"通配符匹配成功: {rule_key} -> {standardized_path}")
+            #                 break
+            #
+            # # 5. 构建响应
+            # if matched_rule:
+            #     log.info(f"找到匹配规则: {matching_key}")
+            #     return await self._build_response(matched_rule)
+            #
+            # log.warning(f"未找到匹配规则: 方法={method} 路径={standardized_path}")
+            # log.debug(f"所有尝试的规则: {list(user_rules.keys())}")
+            # return None
 
         except Exception as e:
             log.exception(f"Mock响应处理失败: {str(e)}")
             return None
 
-    async def _build_response(self, rule: dict) -> FastResponse:
-        """根据规则构建响应"""
+    async def nosessionmock_response(self, path: str, method: str, request: Request = None) -> Optional[FastResponse]:
+        """增强匹配日志的Mock响应处理"""
+        try:
+            log.info(f"====== 开始处理Mock请求: {method} {path} ======")
+
+            async with async_session() as session:
+                # 获取匹配规则
+                rule = await self.nosessionfind_matching_rule(
+                    path=path,
+                    method=method,
+                    session=session
+                )
+
+                if not rule:
+                    log.warning(f"未找到匹配规则: {method} {path}")
+                    return None
+
+                # 构建响应
+                return await self._build_response(rule)
+
+        except Exception as e:
+            log.exception(f"Mock响应处理失败: {str(e)}")
+            return None
+
+    async def find_matching_rule(
+            self,
+            path: str,
+            method: str,
+            #domain: str,
+            user_id: Optional[int],
+            session: AsyncSession
+    ) -> Optional[MockRuleModel]:
+        """精确查找匹配规则"""
+        try:
+            # 尝试精确匹配
+            # rule = await MockRuleMapper.get_by_path_method(
+            #     path=path,
+            #     method=method,
+            #     #user_id=user_id or 0,
+            #     user_id=user_id,
+            #     session=session
+            # )
+
+            # if rule:
+            #     # 检查域名限制
+            #     if rule.domain and rule.domain != domain:
+            #         log.info(f"域名不匹配: 规则要求 {rule.domain}, 实际 {domain}")
+            #         return None
+            #     return rule
+
+            # 尝试通配符匹配
+            #return await self.find_wildcard_rule(path, method, domain, user_id, session)
+            log.info(f"规则匹配: find_matching_rule")
+            return await self.find_wildcard_rule(path, method, user_id,session)
+
+        except Exception as e:
+            log.error(f"规则匹配失败: {str(e)}")
+            return None
+
+    async def nosessionfind_matching_rule(
+            self,
+            path: str,
+            method: str,
+            session: AsyncSession = None
+            #domain: str
+    ) -> Optional[MockRuleModel]:
+        """精确查找匹配规则"""
+        try:
+            # 尝试精确匹配
+            rule = await MockRuleMapper.get_nosessionby_path_method(
+                path=path,
+                method=method,
+                session=session
+                #user_id=user_id or 0
+            )
+
+            # 确保返回的是MockRuleModel或None
+            if rule and not isinstance(rule, MockRuleModel):
+                log.error(f"无效的规则类型: {type(rule)}")
+                return None
+
+            # 尝试通配符匹配
+            rule = await self.find_wildcard_rule(path, method, session=session)
+
+            # 再次确保返回的是MockRuleModel或None
+            if rule and not isinstance(rule, MockRuleModel):
+                log.error(f"无效的规则类型: {type(rule)}")
+                return None
+
+            return rule
+
+        except Exception as e:
+            log.error(f"规则匹配失败: {str(e)}")
+            return None
+    async def find_wildcard_rule(
+            self,
+            path: str,
+            method: str,
+            user_id: Optional[int] = None,
+            session: AsyncSession = None
+            #domain: str
+    ) -> Optional[MockRuleModel]:
+        """通配符匹配规则"""
+        # 获取所有可访问规则
+        rules = await MockRuleMapper.get_accessible_rules(user_id, session)
+        # 标准化路径
+        clean_path = path.rstrip('/')
+        if not clean_path.startswith('/'):
+            clean_path = f'/{clean_path}'
+
+        # 查找最佳匹配
+        best_match = None
+        for rule in rules:
+            # 方法不匹配
+            if rule.method != method.upper():
+                continue
+
+            # 域名不匹配
+            # if rule.domain and rule.domain != domain:
+            #     continue
+
+            # 标准化规则路径和请求路径
+            rule_path = rule.path.rstrip('/')
+            request_path = path.rstrip('/')
+            log.info(f"尝试匹配 - 规则路径: '{rule_path}' vs 请求路径: '{request_path}'")
+
+            # 处理不以斜杠开头的路径
+            if not rule_path.startswith('/'):
+                rule_path = f'/{rule_path}'
+            if not request_path.startswith('/'):
+                request_path = f'/{request_path}'
+
+            # 精确匹配（考虑带/和不带/的情况）
+            if (request_path == rule_path or
+                f"{request_path}/" == rule_path or
+                request_path == f"{rule_path}/" or
+                request_path.lstrip('/') == rule_path.lstrip('/')):
+                return rule
+
+            # 通配符匹配
+            if '*' in rule_path:
+                # 处理通配符在中间的情况
+                pattern = rule_path.replace('*', '.*')
+                if re.fullmatch(pattern, request_path):
+                    # 选择最长路径的规则（最具体）
+                    if not best_match or len(rule_path) > len(best_match.path):
+                        best_match = rule
+                # 处理通配符在开头的情况
+                elif rule_path.startswith('*/') and request_path.endswith(rule_path[1:]):
+                    if not best_match or len(rule_path) > len(best_match.path):
+                        best_match = rule
+                # 处理路径前缀匹配
+                elif rule_path.endswith('/*') and request_path.startswith(rule_path[:-1]):
+                    if not best_match or len(rule_path) > len(best_match.path):
+                        best_match = rule
+
+        return best_match
+
+    def check_access(
+            self,
+            rule: MockRuleModel,
+            user_id: Optional[int],
+            config: dict
+    ) -> bool:
+        """检查规则访问权限"""
+        min_level = config.get("min_access_level", 0)
+
+        # 规则所有者直接访问
+        if rule.user_id == user_id:
+            return True
+
+        # 检查最低访问级别
+        if rule.access_level < min_level:
+            return False
+
+        # 公共规则
+        if rule.access_level == 2:
+            return True
+
+        # 登录用户规则
+        if rule.access_level == 1:
+            return user_id is not None
+
+        return False
+
+    async def _build_response(self, rule: MockRuleModel) -> FastResponse:
         """根据规则构建响应"""
         # 处理延迟响应
-        if rule.get("delay"):
+        if rule.delay:
             # 数据库存储的是毫秒，转换为秒
-            await asyncio.sleep(rule["delay"] / 1000)
+            await asyncio.sleep(rule.delay / 1000)
 
         # 构建响应
-        response_data = rule.get("response") or {}
+        response_data = rule.response or {}
         if isinstance(response_data, str):
             try:
                 response_data = json.loads(response_data)
             except json.JSONDecodeError:
                 response_data = {"raw": response_data}
+        # 确保中文字符正确显示
+        content = json.dumps(response_data, ensure_ascii=False) if isinstance(response_data, dict) else response_data
 
         response = FastResponse(
-            status_code=rule.get("status_code", 200),
-            content=json.dumps(response_data) if isinstance(response_data, dict) else response_data,
-            media_type=rule.get("content_type", "application/json")
+            status_code=rule.status_code if rule.status_code else 200,
+            #content=json.dumps(response_data) if isinstance(response_data, dict) else response_data,
+            #media_type=rule.content_type if rule.content_type else "application/json"
+            content=content,
+            media_type=f"{rule.content_type if rule.content_type else 'application/json'}; charset=utf-8"  # 关键修改
         )
 
         # 添加自定义headers
-        if headers := rule.get("headers"):
-            for key, value in headers.items():
+        if rule.headers:
+            for key, value in rule.headers.items():
                 response.headers[key] = str(value)
 
         # 添加cookies
-        if cookies := rule.get("cookies"):
-            for key, value in cookies.items():
+        if rule.cookies:
+            for key, value in rule.cookies.items():
                 response.set_cookie(key=key, value=str(value))
 
         return response
@@ -442,19 +683,19 @@ async def get_mock_manager(user_id: int, session: AsyncSession = None) -> MockMa
     mock_manager.user_status[user_id] = await MockConfigMapper.is_mock_enabled(user_id, session)
     return mock_manager
 
-async def mock_request_checker(request: Request, call_next):
-    """检查请求头中是否有mock标志"""
-    if request.headers.get("X-Mock-Request", "").lower() != "true":
-        return FastResponse(
-            status_code=404,
-            content=json.dumps({
-                "code": 404,
-                "message": "非Mock请求",
-                "suggestion": "如需Mock请求，请添加X-Mock-Request: true请求头"
-            }),
-            media_type="application/json"
-        )
-    return await call_next(request)
+# async def mock_request_checker(request: Request, call_next):
+#     """检查请求头中是否有mock标志"""
+#     if request.headers.get("X-Mock-Request", "").lower() != "true":
+#         return FastResponse(
+#             status_code=404,
+#             content=json.dumps({
+#                 "code": 404,
+#                 "message": "非Mock请求",
+#                 "suggestion": "1如需Mock请求，请添加X-Mock-Request: true请求头"
+#             }, ensure_ascii=False).encode('utf-8'),
+#             media_type="application/json; charset=utf-8"
+#         )
+#     return await call_next(request)
 
 async def init_mock_config():
     """初始化mock配置"""
