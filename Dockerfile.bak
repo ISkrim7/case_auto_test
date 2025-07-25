@@ -1,0 +1,110 @@
+# 第一阶段：构建环境
+FROM python:3.12-slim-bullseye as builder
+WORKDIR /app
+
+# 使用阿里云Debian镜像源
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
+# 复制依赖文件
+COPY requirements.txt .
+
+# 安装构建依赖
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        python3-dev \
+        libmagic-dev \
+        # Playwright 系统依赖
+        libnss3 \
+        libnspr4 \
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libdrm2 \
+        libxkbcommon0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libgbm1 \
+        libpango-1.0-0 \
+        libcairo2 \
+        libasound2 \
+        libatspi2.0-0 \
+        libwayland-client0 \
+        libwayland-server0 && \
+    pip install --upgrade pip && \
+    pip install --user --no-warn-script-location pydantic-core && \
+    pip install --user --no-warn-script-location --no-deps -r requirements.txt && \
+    apt-get remove -y gcc python3-dev libmagic-dev && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /root/.cache/pip  # 新增缓存清理
+
+# 第二阶段：运行时环境（关键修复）
+FROM python:3.12-slim-bullseye
+WORKDIR /app
+
+# 创建系统用户和组（修复用户不存在问题）
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    mkdir -p /app/{logs,screenshots/errors} && \
+    chown -R appuser:appuser /app
+
+# 使用阿里云Debian镜像源
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libmagic1 \
+        ca-certificates \
+        tzdata \
+        # Playwright 浏览器依赖
+        libnss3 \
+        libnspr4 \
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libdrm2 \
+        libxkbcommon0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libgbm1 \
+        libpango-1.0-0 \
+        libcairo2 \
+        libasound2 \
+        libatspi2.0-0 \
+        libwayland-client0 \
+        libwayland-server0 && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    rm -rf /var/lib/apt/lists/*
+
+# 关键修复：复制包到全局路径（/usr/local）而非 /root
+COPY --from=builder /root/.local /usr/local
+COPY --chown=appuser:appuser . .
+
+# 设置全局PATH
+ENV PATH=/usr/local/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright \
+    TZ=Asia/Shanghai
+# 关键修复1：确保以root用户安装浏览器
+# 关键修复2：创建全局可访问的浏览器安装目录
+RUN mkdir -p ${PLAYWRIGHT_BROWSERS_PATH} && \
+    chmod -R 777 ${PLAYWRIGHT_BROWSERS_PATH} && \
+    playwright install --with-deps chromium
+# 切换用户
+USER appuser
+
+
+# 深度缓存清理（优化镜像体积）
+RUN find / -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true && \
+    rm -rf /tmp/* /var/tmp/*
+
+# 暴露端口
+EXPOSE 5050
+#USER appuser
+# 启动命令
+CMD ["uvicorn", "main:hub", "--host", "0.0.0.0", "--port", "5050"]
