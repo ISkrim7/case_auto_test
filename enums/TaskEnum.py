@@ -16,4 +16,4 @@ class TaskResult:
 class StarterEnum(enum.Enum):
     User = 1
     Jenkins = 2
-    RoBot = 3
+    RoBot =3

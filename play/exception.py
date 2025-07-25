@@ -12,4 +12,5 @@ class APIAssertException(AssertionError):
 
 
 
-
+class RetryException(Exception):
+    ...

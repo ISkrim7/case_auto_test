@@ -1,4 +1,3 @@
-
 from faker import Faker
 import time
 from datetime import datetime, timedelta
@@ -58,3 +57,9 @@ class FakerClient:
         # 构造当月1号日期
         first_day_of_month = current_date.replace(day=1)
         return first_day_of_month.strftime("%Y-%m-%d")
+
+
+if __name__ == '__main__':
+    f = FakerClient()
+    a = f.value("timestamp")
+    print(a)

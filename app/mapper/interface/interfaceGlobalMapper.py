@@ -1,9 +1,8 @@
+
 from app.mapper import Mapper
-from app.model.interface.interfaceGlobal import InterfaceGlobalVariable, InterfaceGlobalHeader, InterfaceGlobalFunc
+from app.model.interface.interfaceGlobal import  InterfaceGlobalHeader, InterfaceGlobalFunc
 
 
-class InterfaceGlobalVariableMapper(Mapper):
-    __model__ = InterfaceGlobalVariable
 
 
 class InterfaceGlobalHeaderMapper(Mapper):
@@ -15,7 +14,6 @@ class InterfaceGlobalFuncMapper(Mapper):
 
 
 __all__ = [
-    "InterfaceGlobalVariableMapper",
     "InterfaceGlobalHeaderMapper",
     "InterfaceGlobalFuncMapper"
 ]

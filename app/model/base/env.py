@@ -9,7 +9,7 @@ class EnvModel(BaseModel):
     name = Column(String(50), nullable=False, comment="环境名称")
     description = Column(String(200), nullable=True, comment="环境描述")
     host = Column(String(200), nullable=False, comment="环境host")
-    port = Column(String(20), nullable=True, comment="环境host")
+    port = Column(String(20), nullable=True, comment="环境port")
     project_id = Column(INTEGER,
                         ForeignKey('project.id', ondelete='CASCADE'),
                         nullable=False, comment="项目所属")

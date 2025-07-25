@@ -8,6 +8,8 @@ from app.ws import async_io
 log = MyLoguru().get_logger()
 
 
+
+
 class SocketSender:
     _event: str
     uid: str = None
@@ -94,6 +96,8 @@ class SocketSender:
         if self.startBy == StarterEnum.User:
             return self.starterName
         return StarterEnum(self.startBy).name
+
+
 
     async def clear_logs(self):
         self.logs = []
