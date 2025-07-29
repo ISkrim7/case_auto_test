@@ -307,6 +307,7 @@ class InterfaceGroupMapper(Mapper):
                 )
             )
         except Exception as e:
+            log.error(f"更新组引用计数失败: {str(e)}")
             raise e
 
     @classmethod
