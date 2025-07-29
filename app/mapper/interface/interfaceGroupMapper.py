@@ -195,22 +195,38 @@ class InterfaceGroupMapper(Mapper):
             raise e
 
     @classmethod
-    async def remove_api(cls, groupId: int, apiId: int):
+    async def remove_api(cls, groupId: int, apiId: int) -> tuple[bool, str]:
         """
-        移除关联api
-        :param groupId:
-        :param apiId:
-        :return:
+        移除组内API关联关系(不删除API实体)
+        :param groupId: 当前组ID
+        :param apiId: 要移除的API ID
+        :return: (是否成功, 提示信息)
         """
         try:
             async with async_session() as session:
                 async with session.begin():
-                    from app.mapper.interface import InterfaceMapper
-
                     group: InterfaceGroupModel = await cls.get_by_id(ident=groupId, session=session)
-                    group.api_num -= 1
-                    api: InterfaceModel = await InterfaceMapper.get_by_id(ident=apiId, session=session)
-                    await session.execute(
+                    log.info(f"开始删除组 {groupId} 中的API {apiId}关联")
+
+                    # 检查该API是否被其他组使用
+                    stmt = select(GroupApiAssociation).where(
+                        GroupApiAssociation.api_id == apiId
+                    )
+                    result = await session.execute(stmt)
+                    associations = result.scalars().all()
+
+                    # 收集其他组的关联信息(仅用于日志)
+                    other_groups = []
+                    for assoc in associations:
+                        if assoc.api_group_id != groupId:
+                            other_group = await cls.get_by_id(assoc.api_group_id, session)
+                            other_groups.append(f"组ID: {other_group.id}, 组名: {other_group.name}")
+
+                    if other_groups:
+                        log.warning(f"API {apiId}还被以下组使用:\n" + "\n".join(other_groups))
+
+                    # 删除当前组的关联记录
+                    delete_count = await session.execute(
                         delete(GroupApiAssociation).where(
                             and_(
                                 GroupApiAssociation.api_group_id == groupId,
@@ -218,12 +234,20 @@ class InterfaceGroupMapper(Mapper):
                             )
                         )
                     )
-                    if not api.is_common:
-                        await session.delete(api)
-                        await session.flush()
+
+                    if delete_count.rowcount == 0:
+                        return False, "指定关联不存在"
+
+                    group.api_num -= 1
+                    log.info(f"已删除组 {groupId} 中的API {apiId}关联，影响记录数: {delete_count.rowcount}")
+
+                    await session.flush()
+                    return True, f"成功从组 {groupId} 中移除API {apiId}关联"
 
         except Exception as e:
-            raise e
+            error_msg = f"删除组 {groupId} 中的API {apiId}关联失败: {str(e)}"
+            log.error(error_msg)
+            return False, error_msg
 
     @classmethod
     async def reorder_apis(cls, groupId: int, apiIds: List[int]):

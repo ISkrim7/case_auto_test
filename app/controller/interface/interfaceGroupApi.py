@@ -79,8 +79,11 @@ async def association_apis(groupId: int, cr: User = Depends(Authentication())):
 
 @router.post("/remove_association/api", description="关联api")
 async def association_apis(info: AssociationAPI2GroupSchema, cr: User = Depends(Authentication())):
-    await InterfaceGroupMapper.remove_api(info.groupId, info.apiId)
-    return Response.success()
+    success, message = await InterfaceGroupMapper.remove_api(info.groupId, info.apiId)
+    if success:
+        return Response.success()
+    else:
+        return Response.error(message)
 
 
 @router.post("/reorder_association/apis", description="关联api")
