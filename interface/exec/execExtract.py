@@ -117,7 +117,10 @@ class ExecResponseExtract:
             if 'application/json' in content_type:
                 try:
                     # 保持JSON结构但转为字符串，确保正则能匹配
-                    response_text = json.dumps(self.response.json())
+                    #response_text = json.dumps(self.response.json())
+                    # 解析JSON并重新序列化（保持中文可读性）
+                    json_data = self.response.json()
+                    response_text = json.dumps(json_data, ensure_ascii=False)
                 except ValueError:
                     pass  # 不是有效JSON，保持原样
                     
