@@ -1,5 +1,5 @@
 from typing import List, Mapping, Any, Dict, Callable
-import re
+import re,json
 
 from jsonpath import jsonpath
 
@@ -107,10 +107,24 @@ class ExecResponseExtract:
         return self.response.request.headers.get("cookie", None)
 
     async def _handle_response_text_extract(self, extract: Dict[str, Any]) -> Any:
-        """处理 ResponseTextExtract 类型"""
+        """处理 ResponseTextExtract 类型，统一使用正则表达式处理所有格式响应"""
         try:
-            match = re.search(extract['value'], self.response.text)
+            # 统一将响应内容转为文本处理
+            response_text = self.response.text
+            
+            # 对于JSON响应，保持原始JSON结构但转为字符串处理
+            content_type = self.response.headers.get('content-type', '').lower()
+            if 'application/json' in content_type:
+                try:
+                    # 保持JSON结构但转为字符串，确保正则能匹配
+                    response_text = json.dumps(self.response.json())
+                except ValueError:
+                    pass  # 不是有效JSON，保持原样
+                    
+            # 统一使用正则表达式提取
+            match = re.search(extract['value'], response_text)
             return match.group(1) if match else None
+            
         except Exception as e:
             log.error(f"Failed to extract text value: {e}")
             return None
