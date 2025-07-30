@@ -10,7 +10,8 @@ router = APIRouter(prefix="/module", tags=["模块"])
 
 
 @router.post("/insert", description='添加模块')
-async def insert_module(partInfo: InsertModuleSchema, creator: User = Depends(Authentication(isAdmin=True))):
+async def insert_module(partInfo: InsertModuleSchema, creator: User = Depends(Authentication())):
+#async def insert_module(partInfo: InsertModuleSchema, creator: User = Depends(Authentication(isAdmin=True))):
     await ModuleMapper.save(
         creatorUser=creator,
         **partInfo.model_dump()
@@ -19,7 +20,7 @@ async def insert_module(partInfo: InsertModuleSchema, creator: User = Depends(Au
 
 
 @router.post("/update", description='编辑')
-async def update_module(partInfo: UpdateModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
+async def update_module(partInfo: UpdateModuleSchema, ur: User = Depends(Authentication())):
     await ModuleMapper.update_by_id(
         updateUser=ur,
         **partInfo.model_dump()
@@ -34,7 +35,7 @@ async def remove_module(partInfo: RemoveModuleSchema, ur: User = Depends(Authent
 
 
 @router.post("/drop", description='拖动排序模块')
-async def drop_module(moduleInfo: DropModuleSchema, ur: User = Depends(Authentication(isAdmin=True))):
+async def drop_module(moduleInfo: DropModuleSchema, ur: User = Depends(Authentication())):
     await ModuleMapper.drop(**moduleInfo.model_dump())
     return Response.success()
 
