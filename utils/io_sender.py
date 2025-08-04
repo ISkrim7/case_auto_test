@@ -22,7 +22,7 @@ class SocketSender:
         self._ns = ns
         self.logs = []
         if isinstance(user, User):
-            self.startBy = StarterEnum.User
+            self.startBy = StarterEnum.User.value
             self.starterName = user.username
             self.uid = user.uid
             self.userId = user.id
