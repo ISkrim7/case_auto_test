@@ -132,6 +132,4 @@ dmypy.json
 .idea/
 config.py
 
-
-
 common/locust_client/perf_file

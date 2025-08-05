@@ -243,3 +243,7 @@
  - 接口执行使用了接口功能、不在自定义
  - 添加了UI 组能力执行
  - 整体UI页面优化
+
+- 2025-08-05
+  - 新增用例管理curd
+  - ![case_hub.png](resource/casehub.png)
