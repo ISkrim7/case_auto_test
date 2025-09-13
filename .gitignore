@@ -130,6 +130,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea/
+tt.py
 config.py
 
 common/locust_client/perf_file
