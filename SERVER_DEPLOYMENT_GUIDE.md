@@ -28,7 +28,7 @@ cd case_auto_test
 ### 3. 构建Docker镜像
 
 ```bash
-docker build -t auto-test-hub:2.0 .
+docker build -t auto-test-hub:2.2 .
 ```
 
 ### 4. 使用Docker Compose启动
