@@ -1,9 +1,7 @@
 import csv
-import json
 import os
 from typing import AnyStr, NoReturn, List, Dict, Any
 from fastapi import UploadFile
-
 from app.mapper.file import FileMapper
 from app.model.base import User
 from common.locust_client.perf_file import PerfPath
@@ -136,8 +134,3 @@ class FileManager:
             raise Exception(f"读取文件时出错: {str(e)}")
 
         return data
-
-
-if __name__ == '__main__':
-    a = FileManager.file_reader_for_perf("data.txt")
-    print(a)

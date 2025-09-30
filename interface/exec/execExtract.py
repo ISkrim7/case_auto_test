@@ -102,8 +102,8 @@ class ExecResponseExtract:
 
     async def _handle_request_cookie_extract(self, extract: Dict[str, Any]) -> Any:
         """处理 RequestCookieExtract 类型 """
-        log.info(f"RequestCookieExtract ${self.response.request.headers}")
-        log.info(f"RequestCookieExtract ${self.response.cookies}")
+        #log.info(f"RequestCookieExtract ${self.response.request.headers}")
+        #log.info(f"RequestCookieExtract ${self.response.cookies}")
         return self.response.request.headers.get("cookie", None)
 
     async def _handle_response_text_extract(self, extract: Dict[str, Any]) -> Any:
@@ -111,7 +111,7 @@ class ExecResponseExtract:
         try:
             # 统一将响应内容转为文本处理
             response_text = self.response.text
-            
+
             # 对于JSON响应，保持原始JSON结构但转为字符串处理
             content_type = self.response.headers.get('content-type', '').lower()
             if 'application/json' in content_type:
@@ -123,11 +123,11 @@ class ExecResponseExtract:
                     response_text = json.dumps(json_data, ensure_ascii=False)
                 except ValueError:
                     pass  # 不是有效JSON，保持原样
-                    
+
             # 统一使用正则表达式提取
             match = re.search(extract['value'], response_text)
             return match.group(1) if match else None
-            
+
         except Exception as e:
             log.error(f"Failed to extract text value: {e}")
             return None

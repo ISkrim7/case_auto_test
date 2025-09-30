@@ -237,3 +237,23 @@
  - 集成locust 压测 （半成品）
  - 待完成 数据记录、断言、变量等
  - ![api_perf.png](resource/api_perf.png)
+
+- 2025-07-25
+ - UI 自动化进行了重写
+ - 接口执行使用了接口功能、不在自定义
+ - 添加了UI 组能力执行
+ - 整体UI页面优化
+
+- 2025-08-05
+  - ~~新增用例管理curd~~
+  - ![case_hub.png](resource/casehub.png)
+- 2025-09-17
+  - 测试用例能力
+    - 添加了用例的基本增删改查
+    - 复制、拖拽等
+    - 用例动态生成
+    - 关联需求
+    - 用例库
+    - ![casehub.gif](resource/casehub.gif)
+
+     

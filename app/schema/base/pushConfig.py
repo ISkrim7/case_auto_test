@@ -8,14 +8,14 @@ class PushConfigSchema(BaseModel):
     uid: str | None = None
     push_name: str | None = None
     push_desc: str | None = None
-    push_type: str | None = None
+    push_type: int | None = None
     push_value: str | None = None
 
 
 class InsertPushSchema(PushConfigSchema):
     push_name: str
     push_desc: str | None = None
-    push_type: str
+    push_type: int
     push_value: str
 
 

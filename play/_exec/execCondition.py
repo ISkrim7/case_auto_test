@@ -1,9 +1,11 @@
 from typing import Dict, Any
 
-from app.mapper.ui.uiSubStepMapper import SubStepMapper
-from app.model.ui import UICaseStepsModel
-from play.extract import ExtractManager
+from app.model.playUI import PlayStep
 from utils.io_sender import SocketSender
+from utils.variableTrans import VariableTrans
+from utils import MyLoguru
+
+log = MyLoguru().get_logger()
 
 
 class ExecCondition:
@@ -14,11 +16,16 @@ class ExecCondition:
     LT = 5
     LE = 6
 
-    @staticmethod
-    async def invoke(step: UICaseStepsModel, io: SocketSender, em: ExtractManager) -> bool:
+    def __init__(self, var: VariableTrans):
+        self._var = var
+
+    async def invoke(self, step: PlayStep, io: SocketSender) -> bool:
+        """
+        条件判断
+        """
         condition: Dict[str, Any] = step.condition
-        key = await em.transform_target(condition['key'])
-        value = await em.transform_target(condition['value'])
+        key = await self._var.trans(condition['key'])
+        value = await self._var.trans(condition['value'])
         await io.send(f"条件判断 >> key={key} & value={value}")
         return await  ExecCondition._asserts(key, value, condition['operator'])
 
