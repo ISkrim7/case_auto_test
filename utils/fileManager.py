@@ -9,6 +9,8 @@ from config import Config
 from utils import GenerateTools, log
 from file import current_dir as file_path
 from queue import Queue
+import aiofiles
+
 AVATAR = os.path.join(file_path, "avatar")
 API_DATA = os.path.join(file_path, "api_data")
 
@@ -29,9 +31,8 @@ class FileManager:
         verify_dir(API_DATA)
         fileName = f"{interfaceId}_{file.filename}"
         filePath = os.path.join(API_DATA, fileName)
-        with open(filePath, "wb") as buffer:
-            buffer.write(await file.read())
-
+        async with aiofiles.open(filePath, "wb") as buffer:
+            await buffer.write(await file.read())
         return fileName
 
     @staticmethod
@@ -41,8 +42,8 @@ class FileManager:
         """
         fileName = f"{interfaceId}_{file.filename}"
         filePath = os.path.join(PerfPath, fileName)
-        with open(filePath, "wb") as buffer:
-            buffer.write(await file.read())
+        async with aiofiles.open(filePath, "wb") as buffer:
+            await buffer.write(await file.read())
         return fileName
 
     @staticmethod
@@ -58,14 +59,13 @@ class FileManager:
         """
         verify_dir(AVATAR)
         if user.avatar:
-            log.debug(user.avatar)
             await FileMapper.remove_file(user.avatar.split("uid=")[-1])
 
         fileName = GenerateTools.uid()
         fileType = file.content_type
         filePath = os.path.join(AVATAR, fileName)
-        with open(filePath, "wb") as buffer:
-            buffer.write(await file.read())
+        async with aiofiles.open(filePath, "wb") as buffer:
+            await buffer.write(await file.read())
 
         file_model = await FileMapper.insert(**dict(
             fileType=fileType,
@@ -87,9 +87,9 @@ class FileManager:
             os.remove(path)
 
     @staticmethod
-    def reader(path: str):
-        with open(path, "rb") as f:
-            return f.read()
+    async def reader(path: str):
+        async with  aiofiles.open(path, "rb") as f:
+            return await f.read()
 
     @staticmethod
     def file_reader_for_perf(fileName: str, q: bool = False) -> Queue[Dict[str, Any]] | List[Dict[str, str]]:
