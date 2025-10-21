@@ -1,7 +1,5 @@
 from app.model.basic import BaseModel, base
-from sqlalchemy import Column, INTEGER, ForeignKey, select, String
-
-from enums.CaseEnum import CaseStepType
+from sqlalchemy import Column, INTEGER, ForeignKey
 
 
 class InterCaseAssociation(base):
@@ -9,9 +7,6 @@ class InterCaseAssociation(base):
     接口 业务用例 中间表
     """
     __tablename__ = "interface_case_association"
-    # step_type = Column(INTEGER, default=CaseStepType.API, nullable=False, comment="步骤类型")
-    # step_content_id = Column(INTEGER, ForeignKey('interface.id', ), nullable=True, primary_key=True, comment="步骤表")
-
     interface_id = Column(INTEGER, ForeignKey('interface.id', ), nullable=True, primary_key=True, comment="api接口")
     inter_case_id = Column(INTEGER, ForeignKey('interface_case.id'), primary_key=True)
     step_order = Column(INTEGER)
@@ -63,3 +58,17 @@ class GroupApiAssociation(base):
 
     def __repr__(self):
         return f"<GroupApiAssociation(api_group_id={self.api_group_id}, api_id={self.api_id}, step_order={self.step_order}) />"
+
+
+class ConditionAPIAssociation(base):
+    """
+    接口 条件 中间表
+
+    """
+    __tablename__ = "interface_condition_association"
+    condition_id = Column(INTEGER, ForeignKey('interface_condition.id', ondelete="CASCADE"), primary_key=True)
+    api_id = Column(INTEGER, ForeignKey('interface.id', ondelete="SET NULL"), primary_key=True)
+    step_order = Column(INTEGER)
+
+    def __repr__(self):
+        return f"<ConditionAPIAssociation(condition_id={self.condition_id}, api_id={self.api_id}, step_order={self.step_order}) />"

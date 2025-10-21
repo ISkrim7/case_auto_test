@@ -74,3 +74,17 @@ class RemoveInterfaceApi2Case(AddInterfaceApi2Case):
 class ReorderInterfaceApi2Case(BaseModel):
     caseId: int
     apiIds: List[int]
+
+
+class InitCondition(BaseModel):
+    case_id: int
+
+
+class ConditionAddGroups(BaseModel):
+    condition_api_id: int
+    group_id_list: List[int]
+
+
+class ConditionAddCommons(BaseModel):
+    condition_api_id: int
+    common_api_list: List[int]
