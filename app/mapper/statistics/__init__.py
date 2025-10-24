@@ -3,7 +3,7 @@ from typing import TypeVar
 from sqlalchemy import select, case
 from sqlalchemy.sql.functions import func
 
-from app.mapper.interface import InterfaceCaseMapper
+from app.mapper.interface.interfaceCaseMapper import InterfaceCaseMapper
 from app.mapper.play import PlayCaseMapper
 from app.model import async_session, BaseModel
 from app.model.interface import InterFaceCaseModel, InterfaceTask, InterfaceTaskResultModel

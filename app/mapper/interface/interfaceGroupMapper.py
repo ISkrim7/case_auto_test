@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.mapper import Mapper
 from app.model import async_session
 from app.model.base import User
-from app.model.interface import InterfaceGroupModel, InterfaceModel
+from app.model.interface import InterfaceModel
+from app.model.interface.InterfaceCaseStepContent import InterfaceGroupModel
 from app.model.interface.association import GroupApiAssociation
 from utils import log
 

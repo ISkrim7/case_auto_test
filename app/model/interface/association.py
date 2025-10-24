@@ -17,6 +17,21 @@ class InterCaseAssociation(base):
                 f" step_order={self.step_order}) />")
 
 
+class InterfaceCaseStepContentAssociation(base):
+    """
+    接口 业务用例 步骤 中间表
+    """
+    __tablename__ = "interface_case_content_association"
+    interface_case_id = Column(INTEGER, ForeignKey('interface_case.id', ondelete="CASCADE"), primary_key=True)
+    interface_case_content_id = Column(INTEGER, ForeignKey('interface_case_step_content.id', ondelete="CASCADE"), primary_key=True)
+    step_order = Column(INTEGER)
+
+    def __repr__(self):
+        return (f"<InterfaceCaseStepAssociation(interface_case_id={self.interface_case_id},"
+                f" interface_case_content_id={self.interface_case_content_id},"
+                f" step_order={self.step_order}) />")
+
+
 class CaseTaskAssociation(base):
     """
     业务用例与任务中间表

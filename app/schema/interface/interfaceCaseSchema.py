@@ -9,11 +9,17 @@ __all__ = [
     "OptionInterfaceCaseSchema",
     "ExecuteInterfaceCaseSchema",
     "PageInterfaceCaseSchema",
-    "AddInterfaceCaseCommonAPISchema",
+    "AssociationApisSchema",
     "AddInterfaceCaseCommonGROUPSchema",
     "AddInterfaceApi2Case",
-    "RemoveInterfaceApi2Case",
-    "ReorderInterfaceApi2Case",
+    "RemoveCaseContentSchema",
+    "CopyContentStepSchema",
+    "ReorderContentStepSchema",
+    "AssociationConditionSchema",
+    "UpdateConditionSchema",
+    "AssociationConditionAPISchema",
+    "RemoveAssociationConditionAPISchema",
+    "UpdateCaseContentStepSchema"
 ]
 
 from enums import ModuleEnum
@@ -52,14 +58,14 @@ class PageInterfaceCaseSchema(InterfaceCaseSchema, PageSchema):
     module_type: int = ModuleEnum.API_CASE
 
 
-class AddInterfaceCaseCommonAPISchema(BaseModel):
-    caseId: int
-    commonApis: List[int]
+class AssociationApisSchema(BaseModel):
+    interface_case_id: int
+    interface_id_list: List[int]
 
 
 class AddInterfaceCaseCommonGROUPSchema(BaseModel):
-    caseId: int
-    groupIds: List[int]
+    interface_case_id: int
+    api_group_id_list: List[int]
 
 
 class AddInterfaceApi2Case(BaseModel):
@@ -67,17 +73,28 @@ class AddInterfaceApi2Case(BaseModel):
     apiId: int
 
 
-class RemoveInterfaceApi2Case(AddInterfaceApi2Case):
-    ...
-
-
-class ReorderInterfaceApi2Case(BaseModel):
-    caseId: int
-    apiIds: List[int]
-
-
-class InitCondition(BaseModel):
+class RemoveCaseContentSchema(BaseModel):
     case_id: int
+    content_step_id: int
+
+
+class ReorderContentStepSchema(BaseModel):
+    case_id: int
+    content_step_order: List[int]
+
+
+class AssociationConditionSchema(BaseModel):
+    interface_case_id: int
+
+
+class AssociationConditionAPISchema(BaseModel):
+    condition_id: int
+    interface_id_list: List[int]
+
+
+class RemoveAssociationConditionAPISchema(BaseModel):
+    condition_id: int
+    interface_id: int
 
 
 class ConditionAddGroups(BaseModel):
@@ -88,3 +105,20 @@ class ConditionAddGroups(BaseModel):
 class ConditionAddCommons(BaseModel):
     condition_api_id: int
     common_api_list: List[int]
+
+
+class CopyContentStepSchema(BaseModel):
+    case_id: int
+    content_id: int
+
+
+class UpdateConditionSchema(BaseModel):
+    id: int
+    condition_key: str
+    condition_value: str
+    condition_operator: int
+
+
+class UpdateCaseContentStepSchema(BaseModel):
+    id:int
+    enable:bool
