@@ -19,7 +19,8 @@ __all__ = [
     "UpdateConditionSchema",
     "AssociationConditionAPISchema",
     "RemoveAssociationConditionAPISchema",
-    "UpdateCaseContentStepSchema"
+    "UpdateCaseContentStepSchema",
+    "AddCaseContentStepSchema"
 ]
 
 from enums import ModuleEnum
@@ -120,5 +121,17 @@ class UpdateConditionSchema(BaseModel):
 
 
 class UpdateCaseContentStepSchema(BaseModel):
-    id:int
-    enable:bool
+    id: int
+    enable: bool = None
+    api_wait_time: int = None
+    api_script_text: str = None
+
+
+
+class AddCaseContentStepSchema(BaseModel):
+    case_id:int
+    content_type: int
+    enable: bool = None
+    api_wait_time: int = None
+    api_script_text: str = None
+
