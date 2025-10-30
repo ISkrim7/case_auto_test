@@ -116,22 +116,21 @@ class CopyContentStepSchema(BaseModel):
 class UpdateConditionSchema(BaseModel):
     id: int
     condition_key: str
-    condition_value: str
+    condition_value: str | None = None
     condition_operator: int
 
 
 class UpdateCaseContentStepSchema(BaseModel):
     id: int
+    content_name: str | None = None
     enable: bool = None
     api_wait_time: int = None
     api_script_text: str = None
 
 
-
 class AddCaseContentStepSchema(BaseModel):
-    case_id:int
+    case_id: int
     content_type: int
     enable: bool = None
     api_wait_time: int = None
     api_script_text: str = None
-
