@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import TypeVar, List
 
 from app.mapper.interface import InterfaceTaskMapper
@@ -21,12 +22,33 @@ InterfaceTaskResult = TypeVar('InterfaceTaskResult', bound=InterfaceTaskResultMo
 
 class TaskRunner:
     task: InterfaceTask
-    result: str = InterfaceAPIResultEnum.SUCCESS
 
-    def __init__(self,starter: APIStarter):
+    def __init__(self, starter: APIStarter):
         self.starter = starter
         self.progress = 0
-        self.lock = asyncio.Lock()  # 添加状态锁
+        self._last_progress_update = 0  # 记录上次更新进度的时间
+        self._progress_update_interval = 0.5  # 最小更新间隔（秒）
+
+    async def set_process(self, task_result: InterfaceTaskResult):
+        """写进度"""
+        self.progress += 1
+
+        current_time = time.time()
+        # 只有超过间隔时间或进度完成时才更新
+        if (current_time - self._last_progress_update >= self._progress_update_interval or
+                self.progress >= task_result.totalNumber):
+            task_result.progress = round((self.progress / task_result.totalNumber) * 100, 1)
+            await InterfaceAPIWriter.write_task_process(task_result=task_result)
+            self._last_progress_update = current_time
+
+
+
+    async def write_process_result(self, flag: bool, task_result: InterfaceTaskResult):
+        await self.set_process(task_result)
+        if flag:
+            task_result.successNumber += 1
+        else:
+            task_result.failNumber += 1
 
     async def runTask(self, taskId: int):
         """
@@ -35,7 +57,7 @@ class TaskRunner:
         :return:
         """
         self.task = await InterfaceTaskMapper.get_by_id(taskId)
-        log.info(f"running task {self.task} start by {self.starter.username}")
+        log.debug(f"running task {self.task} start by {self.starter.username}")
 
         task_result: InterfaceTaskResult = await InterfaceAPIWriter.init_interface_task(self.task,
                                                                                         starter=self.starter)
@@ -51,11 +73,12 @@ class TaskRunner:
                 await self.__run_Cases(cases=cases, task_result=task_result)
         except Exception as e:
             log.exception(e)
-            async with self.lock:  # 加锁保护
-                self.result = InterfaceAPIResultEnum.ERROR
             raise e
         finally:
-            task_result.result = self.result
+            if task_result.failNumber > 0:
+                task_result.result = InterfaceAPIResultEnum.ERROR
+            else:
+                task_result.result = InterfaceAPIResultEnum.SUCCESS
             log.debug(task_result.result)
             await InterfaceAPIWriter.write_interface_task_result(task_result)
             if self.task.push_id:
@@ -91,68 +114,30 @@ class TaskRunner:
             await self.write_process_result(flag, task_result)
             await self.starter.clear_logs()
 
-    async def __run_single_api_with_semaphore_and_lock(self, apis: Interface, task_result: InterfaceTaskResult,
+    async def __run_single_api_with_semaphore_and_lock(self, api: Interface, task_result: InterfaceTaskResult,
                                                        semaphore: asyncio.Semaphore, lock: asyncio.Lock):
         """执行单个 API，限制并行数量，并保护共享资源"""
         async with semaphore:  # 限制并行数量
-            # flag: bool = await InterFaceRunner(self.starter).run_interface_by_task(
-            #     interface=api,
-            #     taskResult=task_result
-            # )
-            #
-            # # 使用锁保护共享资源的修改
-            # async with lock:
-            #     await self.write_process_result(flag, task_result)
-            """顺序执行"""
-            for api in apis:
-                flag: bool = await InterFaceRunner(self.starter).run_interface_by_task(
-                    interface=api,
-                    taskResult=task_result
-                )
+            flag: bool = await InterFaceRunner(self.starter).run_interface_by_task(
+                interface=api,
+                taskResult=task_result
+            )
+
+            # 使用锁保护共享资源的修改
+            async with lock:
                 await self.write_process_result(flag, task_result)
-
-                # API失败时更新状态
-                if not flag:
-                    async with self.lock:  # 加锁保护
-                        self.result = InterfaceAPIResultEnum.ERROR
-                        task_result.result = self.result
             await self.starter.clear_logs()
-
-    async def write_process_result(self, flag: bool, task_result: InterfaceTaskResult):
-        await self.set_process(task_result)
-        if flag:
-            task_result.successNumber += 1
-        else:
-            self.result = InterfaceAPIResultEnum.ERROR
-            task_result.failNumber += 1
 
     async def __run_Cases(self, cases: InterfaceCases, task_result: InterfaceTaskResult):
         """执行关联case"""
-        log.info(f"Case将按顺序执行，共 {len(cases)} 个Case")
         for case in cases:
-            flag: bool = await InterFaceRunner(self.starter).run_interfaceCase_by_task(
-                interfaceCase=case,
-                taskResult=task_result
+            flag: bool = await InterFaceRunner(self.starter).run_interCase(
+                interfaceCaseId=case.id,
+                task=task_result
             )
             await self.set_process(task_result)
-            # 关键修改：用例失败时立即更新任务状态
-            if not flag:
-                async with self.lock:  # 加锁保护
-                    self.result = InterfaceAPIResultEnum.ERROR
-                    task_result.result = self.result  # 立即更新任务结果
-                # 立即写入状态变更
-                await InterfaceAPIWriter.write_task_process(task_result=task_result)
-                log.error(f"用例执行失败! 用例ID: {case.id}")
             if flag:
                 task_result.successNumber += 1
-                #break
             else:
-                task_result.result = InterfaceAPIResultEnum.ERROR
                 task_result.failNumber += 1
             await self.starter.clear_logs()
-
-    async def set_process(self, task_result: InterfaceTaskResult):
-        """写进度"""
-        self.progress += 1
-        task_result.progress = round(self.progress / task_result.totalNumber, 1) * 100
-        return await InterfaceAPIWriter.write_task_process(task_result=task_result)

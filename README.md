@@ -112,10 +112,12 @@
 支持：
 
 - 添加公共 API
-- 手动录入 API
-- 添加 API GROUP
-- API 执行拖拽排序
-- 支持基本的 CRUD 操作
+- 添加API 组
+- 添加 逻辑判断
+- 添加 脚本执行
+
+
+![img.png](resource/caseContents.png)
 
 ![Case添加API](resource/caseAdd.gif)
 
@@ -255,5 +257,13 @@
     - 关联需求
     - 用例库
     - ![casehub.gif](resource/casehub.gif)
+- 2025-10-24
+  - 接口用例执行重构
+    - 若干数据库字段更改
+    - 接口执行调整
+  - 添加步骤变量判断能力
+- 2025-10-30
+  - 步骤 等待、脚本录入能力
+
 
      
