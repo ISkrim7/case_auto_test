@@ -112,10 +112,12 @@
 支持：
 
 - 添加公共 API
-- 手动录入 API
-- 添加 API GROUP
-- API 执行拖拽排序
-- 支持基本的 CRUD 操作
+- 添加API 组
+- 添加 逻辑判断
+- 添加 脚本执行
+
+
+![img.png](resource/caseContents.png)
 
 ![Case添加API](resource/caseAdd.gif)
 
