@@ -82,7 +82,7 @@ class ConditionAPIAssociation(base):
     """
     __tablename__ = "interface_condition_association"
     condition_id = Column(INTEGER, ForeignKey('interface_condition.id', ondelete="CASCADE"), primary_key=True)
-    api_id = Column(INTEGER, ForeignKey('interface.id', ondelete="SET NULL"), primary_key=True)
+    api_id = Column(INTEGER, ForeignKey('interface.id', ondelete="SET NULL"))
     step_order = Column(INTEGER)
 
     def __repr__(self):
